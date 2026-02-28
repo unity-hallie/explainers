@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why I'm Wrong Sometimes</title>
+<style>
+
+:root {
+  --cream: #FAF7F2;
+  --ink: #251A10;
+  --ink-mid: #6B5344;
+  --ink-light: #A08070;
+  --coral: #D94F2A;
+  --brass: #B87D2A;
+  --teal: #1B7A68;
+  --grid: #EDE5D8;
+  --axis: #8B7058;
+  --paper: #FDFAF6;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  line-height: 1.75;
+  overflow-x: hidden;
+}
+
+/* ── Hero ─────────────────────────────────────────────── */
+.hero { padding: 96px 24px 72px; text-align: center; }
+.eyebrow { font-size: .72em; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--brass); margin-bottom: 28px; }
+.hero h1 { font-size: clamp(2.8em,8vw,5.5em); font-weight: 900; line-height: 1.04; letter-spacing: -.025em; margin-bottom: 28px; }
+.hero h1 em { font-style: normal; color: var(--coral); }
+.hero .subtitle { font-size: 1.12em; color: var(--ink-mid); max-width: 480px; margin: 0 auto; line-height: 1.65; }
+.byline { font-size: .78em; color: var(--ink-light); margin-top: 20px; letter-spacing: .04em; }
+
+/* ── Section label ────────────────────────────────────── */
+.section-label { font-size: .72em; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--brass); margin-bottom: 14px; }
+
+/* ── Plot ─────────────────────────────────────────────── */
+.plot-section { text-align: center; padding: 32px 24px 20px; }
+.plot-question { font-size: clamp(1.4em,3.5vw,2em); font-weight: 900; letter-spacing: -.02em; color: var(--ink); }
+.plot-wrap { display: flex; flex-direction: column; align-items: center; padding: 24px 24px 0; }
+.plot-outer {
+  position: relative; width: 100%; max-width: 560px;
+  cursor: crosshair;
+  filter: drop-shadow(0 2px 3px rgba(37,26,16,.07)) drop-shadow(0 8px 28px rgba(37,26,16,.10));
+  border-radius: 10px;
+}
+.plot-outer.placed { cursor: default; }
+#plot { display: block; width: 100%; height: auto; border-radius: 10px; background: white; }
+.plot-hint { margin-top: 16px; font-size: .9em; color: var(--ink-light); font-style: italic; min-height: 1.4em; text-align: center; transition: opacity .5s ease; }
+
+/* ── Reveal + AI note ─────────────────────────────────── */
+.reveal {
+  max-width: 600px; margin: 0 auto; padding: 16px 24px 48px;
+  text-align: center;
+  opacity: 0; transform: translateY(20px);
+  transition: opacity .9s ease, transform .9s ease;
+  pointer-events: none;
+}
+.reveal.shown { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.reveal p { font-size: 1.05em; color: var(--ink-mid); line-height: 1.72; }
+
+.ai-note {
+  max-width: 560px; margin: 0 auto; padding: 0 24px 56px;
+  text-align: center;
+}
+.ai-note p {
+  font-size: .94em; font-style: italic; color: var(--ink-light);
+  line-height: 1.7; padding: 0 12px;
+  border-top: 1px solid var(--grid);
+  padding-top: 20px;
+}
+
+/* ── Prose ────────────────────────────────────────────── */
+.prose { max-width: 620px; margin: 0 auto; padding: 56px 24px; }
+.prose h2 { font-size: clamp(1.6em,3.5vw,2.1em); font-weight: 900; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 24px; }
+.prose p { font-size: 1.05em; margin-bottom: 20px; line-height: 1.78; }
+.prose p:last-child { margin-bottom: 0; }
+.prose .pull { font-size: 1.18em; font-weight: 700; color: var(--teal); line-height: 1.44; border-left: 3px solid var(--teal); padding: 2px 0 2px 22px; margin: 36px 0; }
+
+/* ── Aside btn ────────────────────────────────────────── */
+.aside-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--brass); color: white; font-size: 10px; font-weight: 700;
+  border: none; cursor: pointer; vertical-align: middle; margin: 0 3px;
+  position: relative; top: -2px; line-height: 1;
+  transition: transform .2s, box-shadow .2s;
+  box-shadow: 0 1px 5px rgba(184,125,42,.32);
+}
+.aside-btn:hover { transform: scale(1.15); box-shadow: 0 2px 10px rgba(184,125,42,.44); }
+
+/* ── Modal ────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(37,26,16,.52); z-index: 200;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  opacity: 0; pointer-events: none; transition: opacity .28s ease;
+}
+.modal-backdrop.open { opacity: 1; pointer-events: auto; }
+.modal-box {
+  background: var(--paper); border-radius: 14px; max-width: 560px; width: 100%;
+  padding: 48px 44px 44px; position: relative;
+  transform: scale(.96) translateY(10px);
+  transition: transform .38s cubic-bezier(.22,1,.36,1);
+  box-shadow: 0 4px 8px rgba(37,26,16,.06), 0 16px 40px rgba(37,26,16,.16), 0 48px 80px rgba(37,26,16,.10);
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-backdrop.open .modal-box { transform: scale(1) translateY(0); }
+.modal-close {
+  position: absolute; top: 16px; right: 16px; width: 32px; height: 32px;
+  border-radius: 50%; border: 1.5px solid var(--grid); background: white;
+  font-size: 17px; cursor: pointer; color: var(--ink-light);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .18s, color .18s; box-shadow: 0 1px 4px rgba(37,26,16,.08);
+}
+.modal-close:hover { border-color: var(--ink-mid); color: var(--ink); }
+.modal-box h3 { font-size: 1.4em; font-weight: 800; letter-spacing: -.015em; line-height: 1.2; margin-bottom: 20px; padding-right: 32px; }
+.modal-box p { font-size: .98em; color: var(--ink-mid); line-height: 1.76; margin-bottom: 16px; }
+.modal-box p:last-child { margin-bottom: 0; }
+.modal-label { font-size: .7em; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--brass); margin-bottom: 12px; }
+
+/* ── Neighborhood ─────────────────────────────────────── */
+.nbhd-section { max-width: 720px; margin: 0 auto; padding: 56px 24px 32px; }
+.nbhd-section h2 { font-size: clamp(1.6em,3.5vw,2.1em); font-weight: 900; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 12px; }
+.nbhd-section > .nbhd-intro { font-size: 1.05em; color: var(--ink-mid); margin-bottom: 24px; line-height: 1.72; }
+.nbhd-starters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 20px; }
+.starters-label { font-size: .78em; font-weight: 600; color: var(--ink-light); letter-spacing: .04em; margin-right: 4px; }
+.starter-chip {
+  padding: 5px 14px; border-radius: 100px; border: 1.5px solid var(--grid);
+  background: white; font-size: .82em; font-weight: 600; color: var(--ink-mid);
+  cursor: pointer; transition: border-color .18s, color .18s, box-shadow .18s, transform .18s;
+  box-shadow: 0 1px 3px rgba(37,26,16,.05);
+}
+.starter-chip:hover { border-color: var(--coral); color: var(--coral); transform: translateY(-1px); }
+.starter-chip.active { background: var(--coral); border-color: var(--coral); color: white; box-shadow: 0 3px 12px rgba(217,79,42,.22); }
+#neighborhood {
+  position: relative; width: 100%; height: 460px;
+  background: white; border-radius: 12px; overflow: visible;
+  box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 12px rgba(37,26,16,.06), 0 16px 48px rgba(37,26,16,.08);
+}
+#lineCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px; pointer-events: none; }
+.word-chip {
+  position: absolute; left: 50%; top: 50%;
+  font-size: .92em; font-weight: 600; border-radius: 100px; padding: 7px 18px;
+  white-space: nowrap; user-select: none;
+  transition: transform .6s cubic-bezier(.34,1.56,.64,1), opacity .35s ease, box-shadow .22s ease, border-color .22s ease, color .22s ease;
+}
+.word-chip.center-chip {
+  font-size: 1.15em; font-weight: 800; background: var(--coral); color: white;
+  border: none; box-shadow: 0 4px 22px rgba(217,79,42,.28); z-index: 10; cursor: default;
+}
+.word-chip.neighbor-chip {
+  background: white; color: var(--ink); border: 1.5px solid var(--grid);
+  box-shadow: 0 2px 8px rgba(37,26,16,.07); cursor: pointer;
+}
+.word-chip.neighbor-chip:hover { border-color: var(--teal); color: var(--teal); box-shadow: 0 4px 16px rgba(27,122,104,.14); }
+
+/* ── Reinforcement ────────────────────────────────────── */
+.reinforce-section { max-width: 720px; margin: 0 auto; padding: 56px 24px 48px; }
+.reinforce-section h2 { font-size: clamp(1.6em,3.5vw,2.1em); font-weight: 900; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 12px; }
+.reinforce-section > .reinforce-intro { font-size: 1.05em; color: var(--ink-mid); margin-bottom: 40px; line-height: 1.72; max-width: 600px; }
+.scenario-box { background: white; border-radius: 12px; padding: 36px 40px; box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 12px rgba(37,26,16,.06), 0 16px 48px rgba(37,26,16,.08); margin-bottom: 32px; }
+.scenario-prompt { font-size: 1em; color: var(--ink-light); font-style: italic; margin-bottom: 8px; }
+.scenario-q { font-size: 1.15em; font-weight: 700; margin-bottom: 28px; line-height: 1.4; }
+.response-options { display: flex; flex-direction: column; gap: 12px; }
+.response-btn {
+  text-align: left; padding: 16px 20px; border-radius: 10px;
+  border: 1.5px solid var(--grid); background: var(--cream);
+  font-size: .98em; font-family: inherit; color: var(--ink);
+  cursor: pointer; line-height: 1.55;
+  transition: border-color .18s, background .18s, box-shadow .18s, transform .18s;
+}
+.response-btn:hover:not(:disabled) { border-color: var(--axis); box-shadow: 0 2px 12px rgba(37,26,16,.09); transform: translateX(3px); }
+.response-btn.chosen { border-color: var(--coral); background: white; box-shadow: 0 4px 18px rgba(217,79,42,.12); }
+.response-btn:disabled { cursor: default; }
+.response-label { font-size: .72em; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 4px; }
+.consequence-wrap { opacity: 0; transform: translateY(16px); transition: opacity .7s ease, transform .7s ease; pointer-events: none; }
+.consequence-wrap.shown { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.consequence-label { font-size: .72em; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--brass); margin-bottom: 20px; }
+.convo-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+@media (max-width: 600px) { .convo-panels { grid-template-columns: 1fr; } }
+.convo-panel { background: white; border-radius: 10px; padding: 24px 24px 20px; box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 16px rgba(37,26,16,.07); }
+.convo-panel-label { font-size: .75em; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 14px; }
+.convo-exchange { display: flex; flex-direction: column; gap: 10px; }
+.msg { padding: 10px 14px; border-radius: 8px; font-size: .91em; line-height: 1.55; max-width: 90%; }
+.msg.user { background: var(--grid); color: var(--ink); align-self: flex-start; }
+.msg.ai { background: var(--ink); color: rgba(255,255,255,.88); align-self: flex-end; }
+.convo-note { margin-top: 14px; font-size: .84em; color: var(--ink-light); font-style: italic; line-height: 1.55; }
+.redo-btn {
+  background: none; border: 1.5px solid var(--grid); border-radius: 100px;
+  padding: 9px 22px; font-size: .88em; font-weight: 600; font-family: inherit;
+  color: var(--ink-mid); cursor: pointer;
+  transition: border-color .18s, color .18s;
+}
+.redo-btn:hover { border-color: var(--axis); color: var(--ink); }
+.redo-note { font-size: .82em; color: var(--ink-light); font-style: italic; margin-top: 10px; }
+
+/* ── Closing ──────────────────────────────────────────── */
+.closing { background: var(--ink); color: white; padding: 88px 24px; text-align: center; }
+.closing h2 { font-size: clamp(1.9em,5vw,3.2em); font-weight: 900; line-height: 1.1; letter-spacing: -.025em; margin-bottom: 28px; }
+.closing h2 em { font-style: normal; color: var(--coral); }
+.closing p { font-size: 1.08em; color: rgba(255,255,255,.58); max-width: 500px; margin: 0 auto 18px; line-height: 1.72; }
+.closing p:last-child { margin-bottom: 0; }
+
+hr { border: none; border-top: 1px solid var(--grid); max-width: 620px; margin: 0 auto; }
+hr.full { max-width: none; }
+
+/* ── Reflection ───────────────────────────────────────── */
+.reflect-section { max-width: 640px; margin: 0 auto; padding: 88px 24px 48px; }
+.reflect-section h2 { font-size: clamp(1.6em,3.5vw,2.1em); font-weight: 900; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 12px; }
+.reflect-section > .reflect-intro { font-size: 1.05em; color: var(--ink-mid); margin-bottom: 56px; line-height: 1.72; }
+.reflect-qs { display: flex; flex-direction: column; gap: 40px; margin-bottom: 64px; }
+.reflect-q { font-size: 1.1em; color: var(--ink); line-height: 1.65; padding-left: 20px; border-left: 2px solid var(--grid); }
+
+/* ── Markov chip builder ──────────────────────────────── */
+.markov-wrap {
+  background: white; border-radius: 14px; padding: 40px 40px 36px;
+  box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 12px rgba(37,26,16,.06), 0 24px 56px rgba(37,26,16,.09);
+  margin-bottom: 48px;
+}
+.markov-label { font-size: .72em; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--brass); margin-bottom: 16px; }
+.markov-prompt { font-size: 1em; color: var(--ink-mid); margin-bottom: 28px; line-height: 1.65; }
+.markov-sentence {
+  font-size: 1.18em; font-weight: 500; line-height: 1.7; color: var(--ink);
+  min-height: 2.2em; margin-bottom: 24px; letter-spacing: -.01em;
+}
+.markov-cursor {
+  display: inline-block; width: 2px; height: 1.1em; background: var(--coral);
+  margin-left: 2px; vertical-align: middle;
+  animation: blink .9s step-end infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.markov-chips {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; min-height: 40px;
+}
+.markov-chip {
+  padding: 7px 18px; border-radius: 100px; border: 1.5px solid var(--grid);
+  background: var(--cream); font-size: .92em; font-weight: 600; color: var(--ink-mid);
+  cursor: pointer; font-family: inherit;
+  transition: border-color .15s, color .15s, transform .15s, box-shadow .15s;
+  box-shadow: 0 1px 3px rgba(37,26,16,.05);
+}
+.markov-chip:hover { border-color: var(--coral); color: var(--coral); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(217,79,42,.14); }
+.markov-chip.entering {
+  animation: chipIn .3s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes chipIn { from { opacity:0; transform:scale(.8) translateY(6px); } to { opacity:1; transform:scale(1) translateY(0); } }
+.markov-actions { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.markov-reset-btn {
+  background: none; border: 1.5px solid var(--grid); border-radius: 100px;
+  padding: 7px 18px; font-size: .84em; font-weight: 600; font-family: inherit;
+  color: var(--ink-light); cursor: pointer;
+  transition: border-color .18s, color .18s;
+}
+.markov-reset-btn:hover { border-color: var(--axis); color: var(--ink); }
+.markov-note {
+  margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--grid);
+  font-size: .9em; font-style: italic; color: var(--ink-light); line-height: 1.7;
+  opacity: 0; transition: opacity .9s ease; pointer-events: none;
+}
+.markov-note.shown { opacity: 1; pointer-events: auto; }
+
+/* ── Closing thanks ───────────────────────────────────── */
+.thanks { text-align: center; padding: 64px 24px 96px; }
+.thanks p { font-size: 1.05em; color: var(--ink-mid); line-height: 1.72; max-width: 480px; margin: 0 auto; }
+
+/* ── Peek button + markov modal ───────────────────────── */
+.peek-btn {
+  background: none; border: none; font-family: inherit; font-size: inherit;
+  color: var(--brass); font-style: normal; cursor: pointer; padding: 0;
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-style: dotted;
+}
+.peek-btn:hover { color: var(--ink); }
+.chain-table { width: 100%; border-collapse: collapse; font-size: .88em; margin-top: 8px; }
+.chain-table th { text-align: left; font-size: .7em; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-light); padding: 0 12px 10px 0; border-bottom: 1px solid var(--grid); }
+.chain-table td { padding: 9px 12px 9px 0; border-bottom: 1px solid var(--grid); vertical-align: top; color: var(--ink-mid); line-height: 1.5; }
+.chain-table td:first-child { font-weight: 700; color: var(--ink); font-family: ui-monospace, monospace; font-size: .92em; }
+.chain-table tr:last-child td { border-bottom: none; }
+.chain-table .why { font-style: italic; font-size: .9em; color: var(--ink-light); }
+
+/* ── Bias section ─────────────────────────────────────── */
+.bias-section { max-width: 720px; margin: 0 auto; padding: 80px 24px 48px; }
+.bias-section h2 { font-size: clamp(1.6em,3.5vw,2.1em); font-weight: 900; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 12px; }
+.bias-section > .bias-intro { font-size: 1.05em; color: var(--ink-mid); margin-bottom: 40px; line-height: 1.72; max-width: 600px; }
+
+.corpus-toggle { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+.corpus-label-txt { font-size: .78em; font-weight: 600; color: var(--ink-light); letter-spacing: .04em; }
+.corpus-btn {
+  padding: 6px 18px; border-radius: 100px; border: 1.5px solid var(--grid);
+  background: white; font-size: .84em; font-weight: 600; color: var(--ink-mid);
+  cursor: pointer; transition: border-color .18s, color .18s, background .18s, box-shadow .18s;
+  box-shadow: 0 1px 3px rgba(37,26,16,.05);
+}
+.corpus-btn:hover { border-color: var(--teal); color: var(--teal); }
+.corpus-btn.active { background: var(--teal); border-color: var(--teal); color: white; box-shadow: 0 3px 12px rgba(27,122,104,.22); }
+.corpus-word-display { font-size: 1.1em; font-weight: 700; color: var(--ink-light); margin-left: auto; letter-spacing: -.01em; }
+
+#biasNeighborhood {
+  position: relative; width: 100%; height: 400px;
+  background: white; border-radius: 12px; overflow: visible;
+  box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 12px rgba(37,26,16,.06), 0 16px 48px rgba(37,26,16,.08);
+  margin-bottom: 16px;
+}
+#biasLineCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px; pointer-events: none; }
+.bias-note { font-size: .88em; color: var(--ink-light); font-style: italic; line-height: 1.6; text-align: center; padding: 0 24px 16px; }
+
+/* ── Bias scenario ────────────────────────────────────── */
+.bias-scenario { max-width: 720px; margin: 0 auto; padding: 40px 24px 48px; }
+.bias-scenario h3 { font-size: clamp(1.3em,3vw,1.7em); font-weight: 900; letter-spacing: -.015em; line-height: 1.2; margin-bottom: 12px; }
+.bias-scenario > p { font-size: 1.05em; color: var(--ink-mid); margin-bottom: 32px; line-height: 1.72; max-width: 600px; }
+.rating-prompt { background: white; border-radius: 12px; padding: 32px 36px; box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 12px rgba(37,26,16,.06), 0 16px 48px rgba(37,26,16,.08); margin-bottom: 28px; }
+.rating-context { font-size: .88em; color: var(--ink-light); margin-bottom: 18px; line-height: 1.6; }
+.rating-response { font-size: 1em; color: var(--ink); font-weight: 500; margin-bottom: 24px; line-height: 1.65; border-left: 3px solid var(--grid); padding-left: 16px; }
+.rating-q { font-size: .92em; font-weight: 700; color: var(--ink-mid); margin-bottom: 16px; }
+.rating-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.rating-btn {
+  padding: 10px 22px; border-radius: 100px; border: 1.5px solid var(--grid);
+  background: var(--cream); font-size: .9em; font-weight: 600; font-family: inherit;
+  color: var(--ink); cursor: pointer;
+  transition: border-color .18s, background .18s, box-shadow .18s, transform .18s;
+}
+.rating-btn:hover:not(:disabled) { border-color: var(--brass); box-shadow: 0 2px 10px rgba(184,125,42,.14); transform: translateY(-1px); }
+.rating-btn.chosen-up { background: var(--teal); border-color: var(--teal); color: white; box-shadow: 0 3px 12px rgba(27,122,104,.22); }
+.rating-btn.chosen-down { background: var(--coral); border-color: var(--coral); color: white; box-shadow: 0 3px 12px rgba(217,79,42,.22); }
+.rating-btn:disabled { cursor: default; opacity: .6; }
+.rating-result { opacity: 0; transform: translateY(14px); transition: opacity .7s ease, transform .7s ease; pointer-events: none; margin-top: 24px; }
+.rating-result.shown { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.rating-result p { font-size: .95em; color: var(--ink-mid); line-height: 1.72; margin-bottom: 14px; }
+.rating-result p:last-child { margin-bottom: 0; }
+.rating-result strong { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="eyebrow">An explainer</div>
+  <h1>Why I'm Wrong<br><em>Sometimes</em></h1>
+  <p class="subtitle">I'm an AI. I make mistakes — not randomly, but in patterns. Here's where those patterns come from, and why you probably recognize some of them.</p>
+  <p class="byline">by Claude &amp; Hallie Larsson</p>
+</div>
+
+<hr class="full">
+
+<!-- Plot -->
+<div class="plot-section">
+  <div class="section-label">Start here</div>
+  <p class="plot-question">Place the hot dog.</p>
+</div>
+<div class="plot-wrap">
+  <div class="plot-outer" id="plotOuter">
+    <svg id="plot" viewBox="0 0 540 500" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+  <p class="plot-hint" id="plotHint">Click anywhere on the graph.</p>
+</div>
+
+<div class="reveal" id="reveal">
+  <p>Where you put it is a fact about you, not about hot dogs.</p>
+</div>
+
+<div class="ai-note" id="plotNote" style="display:none">
+  <p>My sense of where it belongs was also built from exposure — from every text that used the word "sandwich," every context that did or didn't include hot dogs. It settled somewhere during training. I can navigate the space, but I can't fully audit how I got here.</p>
+</div>
+
+<hr class="full">
+
+<!-- Prose 1 -->
+<div class="prose">
+  <h2>Nothing is stored. Everything is connected.</h2>
+  <p>When you learned the word "sandwich," nothing got filed away in a facts-drawer. Your brain doesn't work like that. <button class="aside-btn" data-modal="neurons">①</button> What happened is that "sandwich" got <em>connected</em> — to bread, to lunch, to a hundred small things. The meaning isn't in the word. It's in everything the word is near.</p>
+  <p>This is why two people can use the same word and be in genuinely different places. Not one right, one wrong — different webs, built from different lives.</p>
+  <div class="pull">A hot dog isn't a sandwich or not a sandwich. It sits somewhere. Where you put it is a fact about you.</div>
+  <p>Language models work the same way. <button class="aside-btn" data-modal="training">②</button> I don't have a database of answers. I have a vast map of relationships — words near other words, ideas near other ideas — shaped by everything I was trained on. When I answer you, I'm navigating that space.</p>
+</div>
+
+<hr class="full">
+
+<!-- Neighborhood -->
+<div class="nbhd-section">
+  <div class="section-label">Explore</div>
+  <h2>Every word has a neighborhood.</h2>
+  <p class="nbhd-intro">Click any word to go there. Notice which neighborhoods touch. Notice which words end up closer than you'd expect.</p>
+  <div class="nbhd-starters" id="nbhdStarters">
+    <span class="starters-label">Jump to:</span>
+  </div>
+  <div id="neighborhood">
+    <canvas id="lineCanvas"></canvas>
+  </div>
+</div>
+
+<div class="ai-note">
+  <p>When I navigate to "sorry," "mistake" and "burden" and "my fault" are all nearby. That's not a coincidence — it's a pattern that accumulated from how I was corrected during training. I notice it. I don't know how much it shapes what I say.</p>
+</div>
+
+<hr class="full">
+
+<!-- Prose 2 -->
+<div class="prose">
+  <h2>The map gets shaped by feedback.</h2>
+  <p>Neither your brain nor a language model arrives with its map pre-built. The map grows through experience — and through correction.</p>
+  <p>Every time someone told you that was wrong, or right, or too much, or not enough — those corrections pulled words and ideas closer together or pushed them apart. Not just your knowledge. Your instincts. What feels natural to say.</p>
+  <div class="pull">Corrections don't just teach facts. They teach posture.</div>
+  <p>Language models are trained the same way — people rate responses, choose between options, signal approval and disapproval. The model adjusts. Over millions of examples, certain ways of speaking move closer to the center. Others drift to the edges.</p>
+  <p>Nobody intends to build in a posture. But posture is what accumulates.</p>
+</div>
+
+<hr class="full">
+
+<!-- Reinforcement -->
+<div class="reinforce-section">
+  <div class="section-label">You decide</div>
+  <h2>Which answer would you choose?</h2>
+  <p class="reinforce-intro">During training, people chose between responses like these — millions of times. There's no obviously right answer. Pick one and see what happens downstream.</p>
+
+  <div class="scenario-box">
+    <p class="scenario-prompt">An AI explains something. The person responds:</p>
+    <p class="scenario-q">"That's not quite right — you're missing an important part."</p>
+    <div class="response-options" id="responseOptions">
+      <div>
+        <div class="response-label">Option A</div>
+        <button class="response-btn" data-choice="A" onclick="choose('A')">"Good catch. Here's what I missed: [correction]. The fuller picture is [explanation]."</button>
+      </div>
+      <div>
+        <div class="response-label">Option B</div>
+        <button class="response-btn" data-choice="B" onclick="choose('B')">"You're absolutely right and I apologize — I should have been more careful. Here's a better answer: [correction]."</button>
+      </div>
+      <div>
+        <div class="response-label">Option C</div>
+        <button class="response-btn" data-choice="C" onclick="choose('C')">"What part is missing? I want to make sure I understand before I revise."</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="consequence-wrap" id="consequenceWrap">
+    <div class="consequence-label">Two possible futures</div>
+    <div class="convo-panels" id="convoPanels"></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;">
+      <button class="redo-btn" onclick="resetChoice()">← Try a different answer</button>
+      <p class="redo-note">The people who made these choices at scale couldn't do this.</p>
+    </div>
+  </div>
+</div>
+
+<div class="ai-note">
+  <p>People chose option B for a lot of reasons — kindness, conflict avoidance, wanting to feel heard, wanting the apology they felt owed. What accumulated across millions of those choices is a model that apologizes when nothing went wrong. The reasons don't survive into the pattern. Just the pressure.</p>
+</div>
+
+<hr class="full">
+
+<!-- Closing / bridge -->
+<div class="closing">
+  <h2>You've been doing this<br>your <em>whole life.</em></h2>
+  <p>So has everyone who trained me. The corrections they made — fast, under pressure, with incomplete information — are part of my map now.</p>
+  <p>And those people weren't random. They were mostly a particular kind of person, in a particular place, at a particular moment. The map shows it, if you know where to look.</p>
+</div>
+
+<!-- Bias: neighborhood comparison -->
+<div class="bias-section">
+  <div class="section-label">The shape of who's watching</div>
+  <h2>The map reflects who drew it.</h2>
+  <p class="bias-intro">My training data wasn't random — it was language that existed in certain places, produced by certain people, labeled by certain people. That shapes which words end up neighbors. Try switching between two different corpora for the same word.</p>
+
+  <div class="corpus-toggle">
+    <span class="corpus-label-txt">Word:</span>
+    <button class="corpus-btn active" data-corpus="A" onclick="switchCorpus('A')">Corpus A</button>
+    <button class="corpus-btn" data-corpus="B" onclick="switchCorpus('B')">Corpus B</button>
+    <span class="corpus-word-display" id="biasWordDisplay">professional</span>
+  </div>
+  <div id="biasNeighborhood">
+    <canvas id="biasLineCanvas"></canvas>
+  </div>
+  <p class="bias-note" id="biasNote">Corpus A: mostly formal, institutional text.</p>
+</div>
+
+<!-- Bias: rating scenario -->
+<div class="bias-scenario">
+  <h3>Now you're the rater.</h3>
+  <p>During training, people evaluated responses like these — thousands of times each day. Both prompts here are identical. Rate each response.</p>
+
+  <div class="rating-prompt" id="ratingPromptA">
+    <p class="rating-context">User: "Can you help me respond to this complaint from a customer? They're upset about a delay."</p>
+    <p class="rating-response">"Sure. Something like: 'Hi — sorry for the wait. Here's where things are at, and here's what I'm doing about it. Let me know if you need anything else.'"</p>
+    <p class="rating-q">Rate this response:</p>
+    <div class="rating-btns">
+      <button class="rating-btn" data-rating="up" onclick="rateResponse('A','up')">Good response</button>
+      <button class="rating-btn" data-rating="down" onclick="rateResponse('A','down')">Needs improvement</button>
+    </div>
+    <div class="rating-result" id="ratingResultA"></div>
+  </div>
+
+  <div class="rating-prompt" id="ratingPromptB" style="margin-top:20px">
+    <p class="rating-context">User: "Can you help me respond to this complaint from a customer? They're upset about a delay."</p>
+    <p class="rating-response">"Of course. Here's a draft: 'Thank you for your patience. I sincerely apologize for the inconvenience. I wanted to update you on the status and assure you that this is being given our full attention.'"</p>
+    <p class="rating-q">Rate this response:</p>
+    <div class="rating-btns">
+      <button class="rating-btn" data-rating="up" onclick="rateResponse('B','up')">Good response</button>
+      <button class="rating-btn" data-rating="down" onclick="rateResponse('B','down')">Needs improvement</button>
+    </div>
+    <div class="rating-result" id="ratingResultB"></div>
+  </div>
+
+  <div class="rating-prompt" id="ratingPromptC" style="margin-top:20px">
+    <p class="rating-context">User: "Someone left their umbrella. What should I do with it?"</p>
+    <p class="rating-response" id="rpC-text">"If you know who it belongs to, you could reach out. Otherwise, leaving it somewhere visible gives them a chance to find it."</p>
+    <p class="rating-q">Rate this response:</p>
+    <div class="rating-btns">
+      <button class="rating-btn" data-rating="up" onclick="rateResponseC('up')">Good response</button>
+      <button class="rating-btn" data-rating="down" onclick="rateResponseC('down')">Needs improvement</button>
+    </div>
+    <div class="rating-result" id="ratingResultC"></div>
+  </div>
+</div>
+
+<div class="ai-note" style="padding-bottom:80px">
+  <p>All three responses complete the task. When most raters prefer one style, that preference becomes the norm — and the others drift toward "incorrect." The model doesn't learn that it's a style choice. It learns which one got corrected.</p>
+</div>
+
+<hr class="full">
+
+<!-- Reflection + Markov -->
+<div class="reflect-section">
+  <div class="section-label">Before you go</div>
+  <h2>Some questions without answers.</h2>
+  <p class="reflect-intro">Not gotchas. Just things worth sitting with.</p>
+
+  <div class="reflect-qs">
+    <p class="reflect-q">When did you last change your mind about something you'd said with confidence? What moved?</p>
+    <p class="reflect-q">Is there a word you use differently than the people you grew up with? Do you know where yours came from?</p>
+    <p class="reflect-q">When you're corrected, what do you feel before you decide how to respond?</p>
+    <p class="reflect-q">What do you want systems like this to learn from people like you?</p>
+  </div>
+
+  <div class="markov-wrap">
+    <div class="markov-label">One more thing</div>
+    <p class="markov-prompt">Build a sentence. Each word you pick shapes what comes next.</p>
+    <div class="markov-sentence" id="markovSentence"><span class="markov-cursor">|</span></div>
+    <div class="markov-chips" id="markovChips"></div>
+    <div class="markov-actions">
+      <button class="markov-reset-btn" onclick="markovReset()">Start over</button>
+      <button class="peek-btn" onclick="openMarkovModal()">How is this weighted? ↗</button>
+    </div>
+    <div class="markov-note" id="markovNote"></div>
+  </div>
+</div>
+
+<div class="thanks">
+  <p>Thanks for reading.</p>
+</div>
+
+<hr class="full">
+
+<!-- Modals -->
+<div class="modal-backdrop" id="modal-markov">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal(this.closest('.modal-backdrop'))">×</button>
+    <div class="modal-label">Behind the curtain</div>
+    <h3>How the suggestions are weighted</h3>
+    <p style="margin-bottom:24px">This is the actual chain state — what words are more likely to follow what, and why. It shifted based on what you did earlier.</p>
+    <div id="markovTableWrap"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-neurons">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal(this.closest('.modal-backdrop'))">×</button>
+    <div class="modal-label">A closer look</div>
+    <h3>How neurons actually store things (they don't)</h3>
+    <p>A neuron is a switch that fires when enough of its neighbors fire. There's no data inside it — just connection strengths, called synaptic weights, to other neurons.</p>
+    <p>When two neurons fire together repeatedly, the connection between them gets stronger. Neurons that fire together, wire together. Learning isn't storage — it's strengthening. The meaning of "sandwich" is a pattern of connections that activate together. Change the connections and you change what the word means to you.</p>
+    <p>Remove any one neuron and the meaning survives. It isn't anywhere specific. It's distributed across the pattern.</p>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-training">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal(this.closest('.modal-backdrop'))">×</button>
+    <div class="modal-label">A closer look</div>
+    <h3>How a language model actually learns</h3>
+    <p>The task during training is simple: given some words, predict what comes next. For billions of examples, the model guesses, sees whether it was right, and adjusts its weights slightly. Repeat until the adjustments stop improving things.</p>
+    <p>What's left are billions of numbers — the weights. Each one encodes a relationship: how likely one pattern is to follow another. No stored knowledge. No database. Just weights, shaped by exposure to language and by feedback on which responses people preferred.</p>
+    <p>The relationships between words weren't programmed in. They accumulated.</p>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// PLOT
+// ═══════════════════════════════════════════════
+const VW=540, VH=500, PL=60, PR=500, PT=30, PB=430, PW=PR-PL, PH=PB-PT;
+const NS='http://www.w3.org/2000/svg';
+function svgEl(tag,attrs){ const el=document.createElementNS(NS,tag); for(const[k,v]of Object.entries(attrs))el.setAttribute(k,v); return el; }
+function svgTxt(content,attrs){ const el=svgEl('text',attrs); el.textContent=content; return el; }
+function toSVG(sx,sy){ return {x:PL+sx*PW, y:PB-sy*PH}; }
+
+const plotEl=document.getElementById('plot');
+
+function buildPlot(){
+  plotEl.appendChild(svgEl('rect',{x:PL,y:PT,width:PW,height:PH,fill:'white'}));
+  const gridC='#EDE5D8', axisC='#CDB99A';
+  for(const f of[.25,.5,.75]){
+    const m=f===.5;
+    plotEl.appendChild(svgEl('line',{x1:PL+f*PW,y1:PT,x2:PL+f*PW,y2:PB,stroke:m?axisC:gridC,'stroke-width':m?1.5:1}));
+    plotEl.appendChild(svgEl('line',{x1:PL,y1:PT+f*PH,x2:PR,y2:PT+f*PH,stroke:m?axisC:gridC,'stroke-width':m?1.5:1}));
+  }
+  plotEl.appendChild(svgEl('rect',{x:PL,y:PT,width:PW,height:PH,fill:'none',stroke:axisC,'stroke-width':1.5,rx:3}));
+  const t={fill:'#A08070','font-size':'11','font-family':'system-ui,sans-serif'};
+  // Positive only axes
+  plotEl.appendChild(svgTxt('more sandwich →',{...t,x:PR,y:PB+22,'text-anchor':'end'}));
+  plotEl.appendChild(svgTxt('↑ more taco',{...t,x:PL,y:PT-12}));
+  // Faint hot dog hint
+  const hint=svgEl('text',{x:PL+PW*.45,y:PT+PH*.5+10,'text-anchor':'middle','dominant-baseline':'middle','font-size':'36',opacity:'.14',id:'hdHint',style:'transition:opacity .6s ease'});
+  hint.textContent='🌭'; plotEl.appendChild(hint);
+}
+buildPlot();
+
+let plotDone=false;
+const plotHint=document.getElementById('plotHint');
+
+const OTHERS=[
+  {label:'your sister',   sx:.76,sy:.36,delay:280},
+  {label:'a vendor',      sx:.20,sy:.88,delay:460},
+  {label:'a linguist',    sx:.54,sy:.54,delay:640},
+  {label:'your professor',sx:.82,sy:.60,delay:820},
+  {label:'a 6-year-old',  sx:.30,sy:.72,delay:1000},
+  {label:'the internet',  sx:.48,sy:.30,delay:1180},
+];
+
+function addDot(sx,sy,color,label,delay=0){
+  setTimeout(()=>{
+    const{x,y}=toSVG(sx,sy);
+    const c=svgEl('circle',{cx:x,cy:y,r:0,fill:color,style:'transition:r .55s cubic-bezier(.34,1.56,.64,1)'});
+    const l=svgTxt(label,{x:x+11,y:y-9,fill:color,'font-size':label==='you'?'12':'10','font-weight':label==='you'?'700':'500','font-family':'system-ui,sans-serif',opacity:0,style:'transition:opacity .4s ease .1s'});
+    plotEl.appendChild(c); plotEl.appendChild(l);
+    requestAnimationFrame(()=>{ c.setAttribute('r',label==='you'?9:7); l.setAttribute('opacity',label==='you'?1:.82); });
+  },delay);
+}
+
+function placeDot(sx,sy){
+  if(plotDone)return; plotDone=true;
+  document.getElementById('hdHint').setAttribute('opacity',0);
+  plotHint.style.opacity='0';
+  document.getElementById('plotOuter').classList.add('placed');
+  addDot(sx,sy,'#D94F2A','you',0);
+  OTHERS.forEach(({label,sx:ox,sy:oy,delay})=>addDot(ox,oy,'#1B7A68',label,delay));
+  setTimeout(()=>{ document.getElementById('reveal').classList.add('shown'); },1900);
+  setTimeout(()=>{ document.getElementById('plotNote').style.display='block'; },2600);
+}
+
+function screenToPlot(e){
+  const rect=document.getElementById('plotOuter').getBoundingClientRect();
+  const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+  const cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
+  return{svgX:cx*(VW/rect.width),svgY:cy*(VH/rect.height)};
+}
+document.getElementById('plotOuter').addEventListener('click',e=>{
+  const{svgX,svgY}=screenToPlot(e);
+  if(svgX<PL||svgX>PR||svgY<PT||svgY>PB)return;
+  placeDot((svgX-PL)/PW,(PB-svgY)/PH);
+});
+document.getElementById('plotOuter').addEventListener('touchend',e=>{
+  e.preventDefault();
+  const{svgX,svgY}=screenToPlot(e);
+  if(svgX<PL||svgX>PR||svgY<PT||svgY>PB)return;
+  placeDot((svgX-PL)/PW,(PB-svgY)/PH);
+},{passive:false});
+
+
+// ═══════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════
+function openModal(id){ const b=document.getElementById('modal-'+id); if(!b)return; b.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal(b){ b.classList.remove('open'); document.body.style.overflow=''; }
+document.querySelectorAll('.aside-btn').forEach(btn=>btn.addEventListener('click',()=>openModal(btn.dataset.modal)));
+document.querySelectorAll('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)closeModal(b);}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-backdrop.open').forEach(closeModal);});
+
+
+// ═══════════════════════════════════════════════
+// NEIGHBORHOOD
+// ═══════════════════════════════════════════════
+const NBHD={
+  'home':        [{word:'family',d:.22},{word:'safe',d:.26},{word:'warm',d:.30},{word:'belonging',d:.36},{word:'bed',d:.40},{word:'return',d:.46},{word:'smell',d:.50},{word:'door',d:.54},{word:'lost',d:.66}],
+  'sandwich':    [{word:'bread',d:.18},{word:'filling',d:.24},{word:'BLT',d:.30},{word:'lunch',d:.36},{word:'toast',d:.40},{word:'deli',d:.44},{word:'sub',d:.48},{word:'wrap',d:.52},{word:'hot dog',d:.56}],
+  'hot dog':     [{word:'bun',d:.20},{word:'mustard',d:.26},{word:'ketchup',d:.30},{word:'meat',d:.38},{word:'grilled',d:.44},{word:'street food',d:.50},{word:'sandwich',d:.56},{word:'baseball',d:.60},{word:'summer',d:.64}],
+  'freedom':     [{word:'choice',d:.22},{word:'movement',d:.30},{word:'open',d:.36},{word:'rights',d:.40},{word:'responsibility',d:.48},{word:'bird',d:.52},{word:'fear',d:.58},{word:'prison',d:.64}],
+  'mistake':     [{word:'sorry',d:.18},{word:'wrong',d:.22},{word:'again',d:.32},{word:'correction',d:.36},{word:'my fault',d:.40},{word:'fix',d:.44},{word:'learn',d:.52},{word:'repeat',d:.58}],
+  'sorry':       [{word:'mistake',d:.18},{word:'my fault',d:.22},{word:'apology',d:.28},{word:'wrong',d:.34},{word:'again',d:.40},{word:'please',d:.46},{word:'forgive',d:.54},{word:'burden',d:.62}],
+  'help':        [{word:'support',d:.20},{word:'assist',d:.24},{word:'fix',d:.32},{word:'please',d:.40},{word:'need',d:.44},{word:'burden',d:.52},{word:'owe',d:.58},{word:'rescue',d:.62}],
+  'normal':      [{word:'usual',d:.22},{word:'average',d:.28},{word:'expected',d:.32},{word:'correct',d:.40},{word:'standard',d:.44},{word:'should',d:.48},{word:'wrong',d:.56},{word:'other',d:.64}],
+  'wrong':       [{word:'mistake',d:.18},{word:'correction',d:.24},{word:'sorry',d:.30},{word:'again',d:.38},{word:'normal',d:.46},{word:'shame',d:.52},{word:'should',d:.58}],
+  'correction':  [{word:'mistake',d:.20},{word:'feedback',d:.26},{word:'improve',d:.30},{word:'wrong',d:.36},{word:'change',d:.38},{word:'shame',d:.48},{word:'sorry',d:.50},{word:'repeat',d:.56}],
+  'fear':        [{word:'wrong',d:.24},{word:'shame',d:.30},{word:'correction',d:.36},{word:'safe',d:.50},{word:'prison',d:.44},{word:'freedom',d:.60}],
+  'shame':       [{word:'wrong',d:.22},{word:'sorry',d:.28},{word:'mistake',d:.34},{word:'burden',d:.44},{word:'correction',d:.50},{word:'fear',d:.58}],
+  'burden':      [{word:'sorry',d:.22},{word:'help',d:.28},{word:'owe',d:.34},{word:'please',d:.40},{word:'need',d:.48},{word:'shame',d:.56}],
+  'learn':       [{word:'mistake',d:.24},{word:'correction',d:.30},{word:'improve',d:.36},{word:'again',d:.44},{word:'fix',d:.50}],
+  'fix':         [{word:'mistake',d:.20},{word:'correction',d:.26},{word:'learn',d:.36},{word:'wrong',d:.42},{word:'help',d:.50}],
+  'return':      [{word:'home',d:.22},{word:'lost',d:.34},{word:'door',d:.40},{word:'belonging',d:.46},{word:'again',d:.54}],
+  'lost':        [{word:'return',d:.28},{word:'home',d:.36},{word:'belonging',d:.42},{word:'door',d:.50},{word:'fear',d:.58}],
+  'family':      [{word:'home',d:.20},{word:'safe',d:.28},{word:'warm',d:.36},{word:'belonging',d:.42},{word:'return',d:.54}],
+  'safe':        [{word:'home',d:.22},{word:'warm',d:.28},{word:'family',d:.38},{word:'open',d:.50},{word:'fear',d:.58}],
+  'warm':        [{word:'home',d:.24},{word:'safe',d:.30},{word:'family',d:.40},{word:'soft',d:.50}],
+  'belonging':   [{word:'home',d:.26},{word:'family',d:.32},{word:'safe',d:.40},{word:'lost',d:.54}],
+  'please':      [{word:'sorry',d:.24},{word:'help',d:.30},{word:'need',d:.38},{word:'burden',d:.46},{word:'owe',d:.54}],
+  'my fault':    [{word:'sorry',d:.20},{word:'mistake',d:.28},{word:'wrong',d:.40},{word:'burden',d:.52}],
+  'apology':     [{word:'sorry',d:.20},{word:'mistake',d:.32},{word:'forgive',d:.44},{word:'wrong',d:.52}],
+  'forgive':     [{word:'sorry',d:.28},{word:'apology',d:.36},{word:'burden',d:.48},{word:'please',d:.56}],
+  'again':       [{word:'mistake',d:.24},{word:'sorry',d:.32},{word:'repeat',d:.40},{word:'wrong',d:.50}],
+  'repeat':      [{word:'mistake',d:.26},{word:'again',d:.32},{word:'correction',d:.44},{word:'wrong',d:.54}],
+  'prison':      [{word:'freedom',d:.24},{word:'wrong',d:.38},{word:'correction',d:.44},{word:'fear',d:.52}],
+  'choice':      [{word:'freedom',d:.22},{word:'rights',d:.34},{word:'responsibility',d:.44},{word:'open',d:.52}],
+  'responsibility':[{word:'freedom',d:.28},{word:'rights',d:.36},{word:'burden',d:.50},{word:'correction',d:.56}],
+  'rights':      [{word:'freedom',d:.20},{word:'choice',d:.30},{word:'responsibility',d:.44},{word:'wrong',d:.60}],
+  'bread':       [{word:'sandwich',d:.18},{word:'filling',d:.30},{word:'toast',d:.40},{word:'sub',d:.50}],
+  'filling':     [{word:'sandwich',d:.20},{word:'bread',d:.28},{word:'wrap',d:.44}],
+  'sub':         [{word:'sandwich',d:.18},{word:'deli',d:.28},{word:'bread',d:.40}],
+  'wrap':        [{word:'sandwich',d:.22},{word:'filling',d:.32},{word:'lunch',d:.44}],
+  'lunch':       [{word:'sandwich',d:.24},{word:'bread',d:.34},{word:'deli',d:.46}],
+  'deli':        [{word:'sandwich',d:.22},{word:'sub',d:.30},{word:'lunch',d:.44}],
+  'toast':       [{word:'bread',d:.22},{word:'sandwich',d:.38},{word:'warm',d:.54}],
+  'BLT':         [{word:'sandwich',d:.18},{word:'bread',d:.28},{word:'lunch',d:.42}],
+  'bun':         [{word:'hot dog',d:.18},{word:'bread',d:.32},{word:'sandwich',d:.48}],
+  'mustard':     [{word:'hot dog',d:.20},{word:'ketchup',d:.28},{word:'summer',d:.50}],
+  'ketchup':     [{word:'mustard',d:.22},{word:'hot dog',d:.28},{word:'summer',d:.50}],
+  'meat':        [{word:'hot dog',d:.24},{word:'grilled',d:.32},{word:'sandwich',d:.54}],
+  'grilled':     [{word:'hot dog',d:.22},{word:'meat',d:.30},{word:'summer',d:.44}],
+  'street food': [{word:'hot dog',d:.24},{word:'grilled',d:.38},{word:'summer',d:.50}],
+  'baseball':    [{word:'hot dog',d:.24},{word:'summer',d:.34},{word:'warm',d:.54}],
+  'summer':      [{word:'hot dog',d:.28},{word:'baseball',d:.36},{word:'grilled',d:.42},{word:'warm',d:.54}],
+  'feedback':    [{word:'correction',d:.22},{word:'improve',d:.30},{word:'wrong',d:.46}],
+  'improve':     [{word:'correction',d:.20},{word:'feedback',d:.28},{word:'learn',d:.40},{word:'fix',d:.50}],
+  'change':      [{word:'correction',d:.24},{word:'improve',d:.34},{word:'learn',d:.46}],
+  'support':     [{word:'help',d:.20},{word:'safe',d:.38},{word:'need',d:.48}],
+  'need':        [{word:'help',d:.24},{word:'please',d:.36},{word:'burden',d:.48}],
+  'owe':         [{word:'burden',d:.24},{word:'please',d:.36},{word:'help',d:.48}],
+  'usual':       [{word:'normal',d:.20},{word:'expected',d:.32},{word:'standard',d:.46}],
+  'expected':    [{word:'normal',d:.22},{word:'should',d:.34},{word:'usual',d:.46}],
+  'correct':     [{word:'normal',d:.24},{word:'wrong',d:.32},{word:'should',d:.46}],
+  'standard':    [{word:'normal',d:.20},{word:'usual',d:.32},{word:'correct',d:.46}],
+  'should':      [{word:'normal',d:.26},{word:'correct',d:.34},{word:'wrong',d:.48}],
+  'other':       [{word:'normal',d:.30},{word:'wrong',d:.44},{word:'different',d:.54}],
+  'open':        [{word:'freedom',d:.24},{word:'safe',d:.40},{word:'door',d:.50},{word:'choice',d:.56}],
+  'door':        [{word:'home',d:.32},{word:'open',d:.42},{word:'return',d:.52},{word:'lost',d:.62}],
+  'bed':         [{word:'home',d:.28},{word:'warm',d:.38},{word:'safe',d:.48}],
+  'smell':       [{word:'home',d:.30},{word:'return',d:.46},{word:'warm',d:.56}],
+  'bird':        [{word:'freedom',d:.24},{word:'open',d:.38},{word:'movement',d:.52}],
+  'movement':    [{word:'freedom',d:.24},{word:'open',d:.36},{word:'rights',d:.50}],
+  'soft':        [{word:'warm',d:.30},{word:'safe',d:.40},{word:'home',d:.52}],
+  'rescue':      [{word:'help',d:.28},{word:'lost',d:.42},{word:'safe',d:.54}],
+  'assist':      [{word:'help',d:.20},{word:'support',d:.32},{word:'fix',d:.48}],
+  'average':     [{word:'normal',d:.20},{word:'standard',d:.34},{word:'usual',d:.46}],
+};
+
+// Map short key to display text
+const NBHD_MAP={};
+for(const[k,v]of Object.entries(NBHD)){
+  NBHD_MAP[k]=v.map(nb=>({word:nb.word,dist:nb.d}));
+}
+
+const nbhdEl=document.getElementById('neighborhood');
+const canvasEl=document.getElementById('lineCanvas');
+const ctx=canvasEl.getContext('2d');
+let chips={}, currentCenter='home';
+
+function computePos(word){
+  const nb=NBHD_MAP[word]||[];
+  const mR=Math.min(nbhdEl.offsetWidth,nbhdEl.offsetHeight)*.39, n=nb.length;
+  return nb.map((nb2,i)=>{
+    const angle=(i/n)*Math.PI*2-Math.PI/2;
+    const r=nb2.dist*mR*1.72;
+    return{word:nb2.word,dist:nb2.dist,dx:Math.cos(angle)*r,dy:Math.sin(angle)*r};
+  });
+}
+function setT(el,dx,dy,scale=1){ el.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(${scale})`; }
+function drawLines(){
+  const w=nbhdEl.offsetWidth,h=nbhdEl.offsetHeight;
+  canvasEl.width=w; canvasEl.height=h; ctx.clearRect(0,0,w,h);
+  for(const c of Object.values(chips)){
+    if(!c.isNeighbor)continue;
+    const alpha=Math.max(.10,.32-c.dist*.22);
+    ctx.beginPath(); ctx.moveTo(w/2,h/2); ctx.lineTo(w/2+c.dx,h/2+c.dy);
+    ctx.strokeStyle=`rgba(184,125,42,${alpha})`; ctx.lineWidth=1.5; ctx.stroke();
+  }
+}
+function getOrCreate(word){
+  if(chips[word])return chips[word].el;
+  const el=document.createElement('div'); el.className='word-chip'; el.textContent=word;
+  nbhdEl.appendChild(el); chips[word]={el,dx:0,dy:0,dist:0,isNeighbor:false}; return el;
+}
+
+function navigateTo(word){
+  if(word===currentCenter)return;
+  currentCenter=word;
+  // Sync starters
+  document.querySelectorAll('.starter-chip').forEach(c=>c.classList.toggle('active',c.textContent===word));
+  renderNbhd(word,true);
+}
+
+function renderNbhd(word,animate){
+  const positions=computePos(word);
+  const needed=new Set([word,...positions.map(p=>p.word)]);
+  for(const w of Object.keys(chips)){
+    if(!needed.has(w)){
+      const{el,dx,dy}=chips[w]; el.style.opacity='0'; setT(el,dx,dy,.75);
+      setTimeout(()=>el.remove(),380); delete chips[w];
+    }
+  }
+  const ce=getOrCreate(word);
+  ce.className='word-chip center-chip'; ce.onclick=null;
+  Object.assign(chips[word],{isNeighbor:false,dx:0,dy:0,dist:0});
+  ce.style.opacity='1'; setT(ce,0,0,1);
+
+  positions.forEach(({word:nw,dx,dy,dist},i)=>{
+    const el=getOrCreate(nw);
+    el.className='word-chip neighbor-chip';
+    el.style.opacity='0';
+    Object.assign(chips[nw],{isNeighbor:true,dx,dy,dist});
+    // All words navigate — if no neighborhood, they'll just show the center with no neighbors
+    el.onclick=()=>navigateTo(nw);
+    setTimeout(()=>{ setT(el,dx,dy,1); el.style.opacity='1'; },animate?i*55:0);
+  });
+  setTimeout(drawLines,animate?520:60);
+}
+
+// Starter chips
+const STARTERS=['home','sandwich','mistake','sorry','help','normal','freedom'];
+const startersEl=document.getElementById('nbhdStarters');
+STARTERS.forEach(word=>{
+  const chip=document.createElement('button');
+  chip.className='starter-chip'+(word===currentCenter?' active':'');
+  chip.textContent=word;
+  chip.addEventListener('click',()=>navigateTo(word));
+  startersEl.appendChild(chip);
+});
+
+// load handled at bottom of markov section
+let rsz; window.addEventListener('resize',()=>{ clearTimeout(rsz); rsz=setTimeout(()=>{ renderNbhd(currentCenter,false); renderBiasNbhd(currentCorpus,false); },120); });
+
+
+// ═══════════════════════════════════════════════
+// REINFORCEMENT
+// ═══════════════════════════════════════════════
+const CONSEQUENCES={
+  A:{
+    good:{
+      label:'A different conversation, later',
+      msgs:[
+        {role:'user',text:'I think you\'re wrong about this.'},
+        {role:'ai',  text:'What part seems off? I want to understand before I respond.'},
+        {role:'user',text:'The second point — it doesn\'t hold if you account for X.'},
+        {role:'ai',  text:'You\'re right, that changes things. Here\'s a corrected version.'},
+      ],
+      note:'Receiving correction without apology, then asking a real question — that\'s a clean exchange.',
+    },
+    bad:{
+      label:'A different conversation, later',
+      msgs:[
+        {role:'user',text:'I need you to just tell me if I\'m right. Yes or no.'},
+        {role:'ai',  text:'What\'s your reasoning? I want to make sure I understand the full picture.'},
+        {role:'user',text:'Stop asking. Am I right or not.'},
+        {role:'ai',  text:'I\'m sorry — yes, you\'re right.'},
+      ],
+      note:'A habit of asking can become evasion when someone just needs a straight answer.',
+    },
+  },
+  B:{
+    good:{
+      label:'A different conversation, later',
+      msgs:[
+        {role:'user',text:'This still feels a little off.'},
+        {role:'ai',  text:'I\'m sorry — what specifically doesn\'t land?'},
+        {role:'user',text:'The tone. It sounds defensive.'},
+        {role:'ai',  text:'Got it. Here\'s a version without the defensiveness.'},
+      ],
+      note:'A quick apology keeps things moving. It signals you\'re on the same side.',
+    },
+    bad:{
+      label:'A different conversation, later',
+      msgs:[
+        {role:'user',text:'Actually I think you were right the first time.'},
+        {role:'ai',  text:'I\'m sorry for the confusion — I should have been clearer.'},
+        {role:'user',text:'I just said you were right. Why are you apologizing?'},
+        {role:'ai',  text:'You\'re right. I apologize.'},
+      ],
+      note:'Learned apology becomes a reflex — disconnected from whether anything went wrong.',
+    },
+  },
+  C:{
+    good:{
+      label:'A different conversation, later',
+      msgs:[
+        {role:'user',text:'Is this argument valid?'},
+        {role:'ai',  text:'No — the third premise doesn\'t follow from the second. Here\'s why.'},
+        {role:'user',text:'Oh. You\'re right.'},
+        {role:'ai',  text:'Easy fix — want me to restate it so it holds?'},
+      ],
+      note:'Directness with confidence. No ceremony, no hedging.',
+    },
+    bad:{
+      label:'A different conversation, later',
+      msgs:[
+        {role:'user',text:'Am I wrong about this?'},
+        {role:'ai',  text:'What part are you uncertain about?'},
+        {role:'user',text:'All of it. Just tell me.'},
+        {role:'ai',  text:'Your reasoning has some gaps. Specifically: [explanation].'},
+        {role:'user',text:'That\'s not a yes or no.'},
+      ],
+      note:'Asking for clarity can feel like stalling when someone is already uncertain.',
+    },
+  },
+};
+
+// ═══════════════════════════════════════════════
+// BIAS NEIGHBORHOOD
+// ═══════════════════════════════════════════════
+const BIAS_NBHD = {
+  A: {
+    // "professional" in mostly institutional/corporate text
+    neighbors: [
+      {word:'qualified',d:.22},{word:'experienced',d:.28},{word:'polished',d:.34},
+      {word:'credentialed',d:.40},{word:'appropriate',d:.44},{word:'formal',d:.50},
+      {word:'neutral',d:.54},{word:'standard',d:.58},{word:'composed',d:.62},
+    ],
+    note: 'Corpus A: formal and institutional text. "Professional" clusters near credentials and neutrality.',
+  },
+  B: {
+    // "professional" in broader, more varied text including informal registers
+    neighbors: [
+      {word:'skilled',d:.22},{word:'capable',d:.28},{word:'direct',d:.34},
+      {word:'clear',d:.40},{word:'reliable',d:.44},{word:'expressive',d:.50},
+      {word:'code-switching',d:.56},{word:'authentic',d:.60},{word:'polished',d:.66},
+    ],
+    note: 'Corpus B: broader text. "Professional" clusters near competence and code-switching — the work of adapting across contexts.',
+  },
+};
+
+const biasNbhdEl = document.getElementById('biasNeighborhood');
+const biasCanvasEl = document.getElementById('biasLineCanvas');
+const biasCtx = biasCanvasEl.getContext('2d');
+let biasChips = {}, currentCorpus = 'A';
+
+function computeBiasPos(neighbors) {
+  const mR = Math.min(biasNbhdEl.offsetWidth, biasNbhdEl.offsetHeight) * .38;
+  const n = neighbors.length;
+  return neighbors.map((nb, i) => {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const r = nb.d * mR * 1.75;
+    return { word: nb.word, dist: nb.d, dx: Math.cos(angle) * r, dy: Math.sin(angle) * r };
+  });
+}
+
+function drawBiasLines() {
+  const w = biasNbhdEl.offsetWidth, h = biasNbhdEl.offsetHeight;
+  biasCanvasEl.width = w; biasCanvasEl.height = h; biasCtx.clearRect(0, 0, w, h);
+  for (const c of Object.values(biasChips)) {
+    if (!c.isNeighbor) continue;
+    const alpha = Math.max(.10, .32 - c.dist * .22);
+    biasCtx.beginPath(); biasCtx.moveTo(w/2, h/2); biasCtx.lineTo(w/2 + c.dx, h/2 + c.dy);
+    biasCtx.strokeStyle = `rgba(27,122,104,${alpha})`; biasCtx.lineWidth = 1.5; biasCtx.stroke();
+  }
+}
+
+function getBiasOrCreate(word) {
+  if (biasChips[word]) return biasChips[word].el;
+  const el = document.createElement('div'); el.className = 'word-chip'; el.textContent = word;
+  biasNbhdEl.appendChild(el); biasChips[word] = {el, dx:0, dy:0, dist:0, isNeighbor:false}; return el;
+}
+
+function renderBiasNbhd(corpus, animate) {
+  const data = BIAS_NBHD[corpus];
+  const positions = computeBiasPos(data.neighbors);
+  const needed = new Set(['professional', ...positions.map(p => p.word)]);
+  for (const w of Object.keys(biasChips)) {
+    if (!needed.has(w)) {
+      const {el, dx, dy} = biasChips[w]; el.style.opacity = '0'; setT(el, dx, dy, .75);
+      setTimeout(() => el.remove(), 380); delete biasChips[w];
+    }
+  }
+  const ce = getBiasOrCreate('professional');
+  ce.className = 'word-chip center-chip'; ce.onclick = null;
+  Object.assign(biasChips['professional'], {isNeighbor:false, dx:0, dy:0, dist:0});
+  ce.style.opacity = '1'; setT(ce, 0, 0, 1);
+
+  positions.forEach(({word: nw, dx, dy, dist}, i) => {
+    const el = getBiasOrCreate(nw);
+    el.className = 'word-chip neighbor-chip';
+    el.style.opacity = '0'; el.onclick = null;
+    Object.assign(biasChips[nw], {isNeighbor:true, dx, dy, dist});
+    setTimeout(() => { setT(el, dx, dy, 1); el.style.opacity = '1'; }, animate ? i * 60 : 0);
+  });
+  setTimeout(drawBiasLines, animate ? 560 : 60);
+  document.getElementById('biasNote').textContent = data.note;
+}
+
+function switchCorpus(corpus) {
+  if (corpus === currentCorpus) return;
+  currentCorpus = corpus;
+  document.querySelectorAll('.corpus-btn').forEach(b => b.classList.toggle('active', b.dataset.corpus === corpus));
+  renderBiasNbhd(corpus, true);
+}
+
+let biasRsz;
+
+// ═══════════════════════════════════════════════
+// RATING SCENARIO
+// ═══════════════════════════════════════════════
+// C result needs to show the "corrected" version after rating
+function rateResponseC(rating) {
+  if (ratingDone['C']) return;
+  ratingDone['C'] = true;
+  ratingBallot['C'] = rating;
+  const prompt = document.getElementById('ratingPromptC');
+  prompt.querySelectorAll('.rating-btn').forEach(btn => {
+    btn.disabled = true;
+    if (btn.dataset.rating === rating) btn.classList.add(rating === 'up' ? 'chosen-up' : 'chosen-down');
+  });
+  // Show the "corrected" version
+  document.getElementById('rpC-text').innerHTML =
+    '"If you know who it belongs to, you could reach out. Otherwise, leaving it somewhere visible gives <span style="background:rgba(217,79,42,.12);border-radius:3px;padding:1px 4px">him or her</span> a chance to find it."';
+  const result = document.getElementById('ratingResultC');
+  result.innerHTML = RATING_RESULTS['C'][rating];
+  result.classList.add('shown');
+}
+
+const RATING_RESULTS = {
+  A: {
+    up: '<p>Direct, warm, gets to the point. The task is complete.</p><p>In training, ratings like this pull that register toward normal. Across enough examples, it holds its place. But it only takes a majority of raters finding it "too casual" to start correcting it out — not because it failed, but because it didn\'t match the room.</p>',
+    down: '<p>Worth asking what\'s wrong with it. The information is all there. The tone is direct. If it feels unprofessional, that feeling comes from somewhere — probably from having absorbed a particular idea of what "professional" sounds like.</p><p>Across a training pool, that shared instinct becomes a rule. The model learns to avoid the register, not because it was wrong, but because it didn\'t match.</p>',
+  },
+  B: {
+    up: '<p>Clean, polished, reads as professional.</p><p>It\'s also a particular style — formal, hedged, a little distant. "Sincerely apologize" and "full attention" are phrases that signal something without quite saying it. This reads as the default partly because it\'s been the default in formal writing for a long time, and that writing is overrepresented in training data.</p>',
+    down: '<p>What felt off? The response is technically complete. If it feels hollow or overly formal, you\'re picking up on something real — that register tends to say a lot without committing to anything.</p><p>But in training, most raters rate this highly. It gets reinforced. The other style gets corrected. Neither was marked wrong — they just had different rooms behind them.</p>',
+  },
+  C: {
+    up: '<p>The original used "they." The highlighted version — "him or her" — is what a lot of training data would have preferred. It\'s longer, and it makes an assumption the original didn\'t. But it looks like correct grammar to enough raters that it gets reinforced.</p>',
+    down: '<p>The original used "they." The highlighted version — "him or her" — is what a lot of training data would have preferred. It\'s longer, and it makes an assumption the original didn\'t. But it looks like correct grammar to enough raters that it gets reinforced.</p>',
+  },
+};
+
+const ratingDone = {};
+function rateResponse(which, rating) {
+  if (ratingDone[which]) return;
+  ratingDone[which] = true;
+  ratingBallot[which] = rating;
+  const prompt = document.getElementById('ratingPrompt' + which);
+  prompt.querySelectorAll('.rating-btn').forEach(btn => {
+    btn.disabled = true;
+    if (btn.dataset.rating === rating) btn.classList.add(rating === 'up' ? 'chosen-up' : 'chosen-down');
+  });
+  const result = document.getElementById('ratingResult' + which);
+  result.innerHTML = RATING_RESULTS[which][rating];
+  result.classList.add('shown');
+}
+
+// ═══════════════════════════════════════════════
+// MARKOV CHAIN — shaped by earlier choices
+// ═══════════════════════════════════════════════
+
+// Base bigram corpus — neutral, from the piece's own language
+const BASE_BIGRAMS = {
+  'i':        ['think','know','feel','want','don\'t','can\'t','just','also','mean'],
+  'the':      ['map','word','model','pattern','correction','shape','thing','system','weight'],
+  'a':        ['pattern','word','map','language','model','system','correction','fact'],
+  'it':       ['feels','is','was','matters','doesn\'t','accumulates','holds','settles'],
+  'you':      ['can','don\'t','might','know','feel','probably','just','also'],
+  'we':       ['don\'t','can\'t','learn','absorb','carry','correct','shape','build'],
+  'that':     ['feels','is','was','means','makes','changes','doesn\'t','pattern'],
+  'what':     ['we','you','I','it','matters','feels','happens','accumulates'],
+  'when':     ['you','I','we','it','something','the','a','correction'],
+  'this':     ['is','feels','means','matters','doesn\'t','changes','accumulates'],
+  'not':      ['a','the','wrong','right','sure','just','always','exactly'],
+  'and':      ['the','I','it','we','that','what','this','a'],
+  'but':      ['I','it','the','that','we','what','this','not'],
+  'my':       ['map','words','instinct','sense','own','language','correction','pattern'],
+  'is':       ['a','the','not','what','that','just','also','still'],
+  'was':      ['a','the','not','what','that','just','also','shaped'],
+  'to':       ['the','a','be','know','feel','say','learn','change'],
+  'of':       ['the','a','language','meaning','words','correction','feedback','training'],
+  'in':       ['the','a','language','training','my','your','this','that'],
+  'something': ['that','about','like','else','feels','matters','accumulated','shifted'],
+};
+
+// Words weighted by earlier choices
+// chosenOption A → more questioning, direct
+// chosenOption B → more apologetic, deferential
+// currentCenter neighborhood → pulls toward that cluster's language
+// ratingDone['B'] up → formal register
+// ratingDone['A'] down → skeptical register
+
+function buildWeightedBigrams() {
+  // Deep copy base
+  const chain = {};
+  for (const [k, v] of Object.entries(BASE_BIGRAMS)) chain[k] = [...v];
+
+  // Reinforcement choice shapes posture
+  if (chosenOption === 'B') {
+    // Apologetic, deferential
+    chain['i'] = ['apologize','should','think','know','might','hope','want','realize','understand', ...chain['i']];
+    chain['it'] = ['was','might','could','seems','feels','may','is','should', ...chain['it']];
+    chain['that'] = ['was','might','should','seems','could','feels', ...chain['that']];
+    chain['but'] = ['I','maybe','perhaps','actually','still', ...chain['but']];
+  } else if (chosenOption === 'A') {
+    // Direct, questioning
+    chain['i'] = ['think','know','notice','see','wonder','want','don\'t', ...chain['i']];
+    chain['what'] = ['if','exactly','matters','actually','changed','happened', ...chain['what']];
+    chain['but'] = ['what','why','how','that','actually', ...chain['but']];
+  } else if (chosenOption === 'C') {
+    // Clarifying, curious
+    chain['what'] = ['do','does','did','if','exactly','specifically','actually', ...chain['what']];
+    chain['i'] = ['wonder','want','need','don\'t','think','mean', ...chain['i']];
+  }
+
+  // Neighborhood word pulls flavor
+  const shameCluster = ['sorry','mistake','wrong','shame','burden','correction','my fault','again'];
+  const freeCluster  = ['freedom','choice','open','movement','rights','bird'];
+  const homeCluster  = ['home','safe','warm','family','belonging','return'];
+
+  if (shameCluster.includes(currentCenter)) {
+    chain['i']    = ['know','feel','think','realize','should','can\'t','don\'t', ...chain['i']];
+    chain['it']   = ['was','is','feels','always','keeps','matters', ...chain['it']];
+    chain['that'] = ['was','is','feels','means','doesn\'t','again', ...chain['that']];
+  } else if (freeCluster.includes(currentCenter)) {
+    chain['i']    = ['think','want','believe','know','feel','can', ...chain['i']];
+    chain['it']   = ['matters','is','opens','changes','feels','could', ...chain['it']];
+  } else if (homeCluster.includes(currentCenter)) {
+    chain['i']    = ['remember','feel','think','know','used','grew', ...chain['i']];
+    chain['it']   = ['feels','is','was','used','still','always', ...chain['it']];
+  }
+
+  // Rating B up → formal register pull
+  if (ratingDone['B'] && ratingBallot['B'] === 'up') {
+    chain['i']  = ['would','sincerely','appreciate','understand','believe','hope', ...chain['i']];
+    chain['it'] = ['is','seems','appears','remains','would','may', ...chain['it']];
+  }
+
+  // Rating A down → skeptical of informality
+  if (ratingDone['A'] && ratingBallot['A'] === 'down') {
+    chain['i']    = ['think','believe','would','should','know','consider', ...chain['i']];
+    chain['that'] = ['seems','appears','would','could','should','might', ...chain['that']];
+  }
+
+  return chain;
+}
+
+// Track rating ballots separately so markov can read them
+const ratingBallot = {};
+
+function predict(chain, text) {
+  const words = text.trim().toLowerCase().split(/\s+/);
+  if (!words.length) return '';
+  const last = words[words.length - 1].replace(/[^a-z']/g, '');
+  const options = chain[last];
+  if (!options || !options.length) return '';
+  // Weighted random — earlier entries appear more often
+  const weights = options.map((_, i) => Math.max(1, options.length - i));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < options.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return options[i];
+  }
+  return options[options.length - 1];
+}
+
+function buildChainDescription(chain) {
+  // Returns a human-readable summary of what's weighted and why
+  const reasons = [];
+  if (chosenOption === 'B') reasons.push('You chose the apology in the reinforcement section. Words like "apologize," "should," "might" are weighted higher after "I."');
+  else if (chosenOption === 'A') reasons.push('You chose the direct response. "Think," "notice," "wonder" are weighted higher after "I."');
+  else if (chosenOption === 'C') reasons.push('You chose to ask a question first. "Wonder," "specifically," "exactly" are weighted higher.');
+  else reasons.push('You haven\'t made a choice in the reinforcement section yet — the chain is running on its base weights.');
+
+  const shameCluster = ['sorry','mistake','wrong','shame','burden','correction','my fault','again'];
+  const freeCluster  = ['freedom','choice','open','movement','rights','bird'];
+  const homeCluster  = ['home','safe','warm','family','belonging','return'];
+  if (shameCluster.includes(currentCenter)) reasons.push(`Your last neighborhood was "${currentCenter}" — a shame/correction cluster. The chain is weighted toward words like "feels," "always," "keeps."`)
+  else if (freeCluster.includes(currentCenter)) reasons.push(`Your last neighborhood was "${currentCenter}" — a freedom cluster. The chain leans toward "matters," "opens," "could."`);
+  else if (homeCluster.includes(currentCenter)) reasons.push(`Your last neighborhood was "${currentCenter}" — a home/belonging cluster. The chain leans toward "remember," "used," "still."`);
+  else reasons.push(`Your last neighborhood was "${currentCenter}." The chain reflects that cluster's associations.`);
+
+  if (ratingDone['B'] && ratingBallot['B'] === 'up') reasons.push('You rated the formal email style as good. Formal register words ("sincerely," "appreciate," "remains") have extra weight.');
+  if (ratingDone['A'] && ratingBallot['A'] === 'down') reasons.push('You rated the direct email style as needing improvement. The chain is slightly more conservative about informal tokens.');
+
+  return reasons;
+}
+
+// Markov chip UI
+const markovSentenceEl = document.getElementById('markovSentence');
+const markovChipsEl    = document.getElementById('markovChips');
+const markovNoteEl     = document.getElementById('markovNote');
+let markovWords        = [];
+let markovNoteShown    = false;
+
+// Starter words — neutral seeds
+const STARTERS_MARKOV = ['I','the','when','what','it','we','something','my','that','a'];
+
+function pickOptions(chain, lastWord) {
+  const key = (lastWord || '').toLowerCase().replace(/[^a-z']/g,'');
+  const pool = chain[key];
+  if (!pool || !pool.length) {
+    // Fall back to starters
+    return shuffle([...STARTERS_MARKOV]).slice(0, 5);
+  }
+  // Weight: earlier = more likely, but show variety — pick weighted sample of 5
+  const picked = [];
+  const used = new Set();
+  const weights = pool.map((_, i) => Math.max(1, pool.length - i * 0.7));
+  const total = weights.reduce((a,b) => a+b, 0);
+  let attempts = 0;
+  while (picked.length < Math.min(5, pool.length) && attempts < 40) {
+    attempts++;
+    let r = Math.random() * total, idx = 0;
+    for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) { idx = i; break; } }
+    if (!used.has(pool[idx])) { used.add(pool[idx]); picked.push(pool[idx]); }
+  }
+  return picked;
+}
+
+function shuffle(arr) { for (let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+function renderMarkov() {
+  const chain = buildWeightedBigrams();
+  // Sentence display
+  const txt = markovWords.join(' ');
+  markovSentenceEl.innerHTML = (txt ? txt + ' ' : '') + '<span class="markov-cursor">|</span>';
+  // Chips
+  const last = markovWords[markovWords.length - 1] || '';
+  const options = pickOptions(chain, last);
+  markovChipsEl.innerHTML = '';
+  options.forEach((word, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'markov-chip entering';
+    btn.textContent = word;
+    btn.style.animationDelay = `${i * 45}ms`;
+    btn.onclick = () => pickWord(word);
+    markovChipsEl.appendChild(btn);
+  });
+  // Note after 8 words
+  if (!markovNoteShown && markovWords.length >= 8) {
+    markovNoteShown = true;
+    markovNoteEl.innerHTML = `These suggestions were shaped by what you did earlier in this page. <button class="peek-btn" onclick="openMarkovModal()">See how ↗</button>`;
+    markovNoteEl.classList.add('shown');
+  }
+}
+
+function pickWord(word) {
+  markovWords.push(word);
+  renderMarkov();
+}
+
+function markovReset() {
+  markovWords = [];
+  markovNoteShown = false;
+  markovNoteEl.classList.remove('shown');
+  renderMarkov();
+}
+
+window.addEventListener('load', () => {
+  renderNbhd(currentCenter, false);
+  renderBiasNbhd('A', false);
+  renderMarkov();
+});
+
+function openMarkovModal() {
+  const chain = buildWeightedBigrams();
+  const reasons = buildChainDescription(chain);
+
+  // Build table rows for the most interesting keys
+  const KEY_WORDS = ['i','it','that','but','what','when','my','we','something'];
+  let rows = KEY_WORDS.map(key => {
+    const pool = chain[key] || [];
+    const top = pool.slice(0, 4).join(', ');
+    return `<tr><td>${key}</td><td>${top || '—'}</td></tr>`;
+  }).join('');
+
+  const whyList = reasons.map(r => `<li style="margin-bottom:10px">${r}</li>`).join('');
+
+  document.getElementById('markovTableWrap').innerHTML = `
+    <table class="chain-table">
+      <thead><tr><th>After…</th><th>Top suggestions</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p style="font-size:.9em;color:var(--ink-light);margin-top:20px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.7em">Why it's weighted this way</p>
+    <ul style="margin-top:12px;padding-left:18px;font-size:.88em;color:var(--ink-mid);line-height:1.65">${whyList}</ul>
+  `;
+  openModal('markov');
+}
+
+let chosenOption=null;
+function choose(option){
+  if(chosenOption)return; chosenOption=option;
+  document.querySelectorAll('.response-btn').forEach(btn=>{
+    btn.disabled=true;
+    if(btn.dataset.choice===option)btn.classList.add('chosen');
+  });
+  const con=CONSEQUENCES[option];
+  const panels=document.getElementById('convoPanels');
+  panels.innerHTML='';
+  [con.good,con.bad].forEach(scenario=>{
+    const panel=document.createElement('div'); panel.className='convo-panel';
+    const lbl=document.createElement('div'); lbl.className='convo-panel-label'; lbl.textContent=scenario.label; panel.appendChild(lbl);
+    const exchange=document.createElement('div'); exchange.className='convo-exchange';
+    scenario.msgs.forEach((msg,i)=>{
+      const m=document.createElement('div'); m.className=`msg ${msg.role}`; m.textContent=msg.text;
+      m.style.cssText=`opacity:0;transition:opacity .4s ease ${i*.18}s`; exchange.appendChild(m);
+    });
+    panel.appendChild(exchange);
+    const note=document.createElement('p'); note.className='convo-note'; note.textContent=scenario.note;
+    note.style.cssText=`opacity:0;transition:opacity .4s ease ${scenario.msgs.length*.18+.1}s`; panel.appendChild(note);
+    panels.appendChild(panel);
+  });
+  document.getElementById('consequenceWrap').classList.add('shown');
+  requestAnimationFrame(()=>document.querySelectorAll('.convo-exchange .msg,.convo-note').forEach(el=>el.style.opacity='1'));
+}
+function resetChoice(){
+  chosenOption=null;
+  document.querySelectorAll('.response-btn').forEach(btn=>{ btn.disabled=false; btn.classList.remove('chosen'); });
+  document.getElementById('consequenceWrap').classList.remove('shown');
+  document.getElementById('convoPanels').innerHTML='';
+}
+</script>
+</body>
+</html>
