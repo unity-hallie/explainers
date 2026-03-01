@@ -386,12 +386,12 @@ hr.full { max-width: none; }
     <svg id="plot" viewBox="0 0 540 500" xmlns="http://www.w3.org/2000/svg"></svg>
   </div>
   <p class="plot-hint" id="plotHint">Click anywhere on the graph.</p>
-  <div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap;justify-content:center">
+  <div id="postPlaceRow" style="display:none;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap;justify-content:center">
     <div class="share-name-wrap" style="margin-bottom:0">
       <span class="share-name-label">Your name:</span>
       <input class="share-name-input" id="shareNameInput" type="text" placeholder="optional" maxlength="24">
     </div>
-    <button class="redo-btn" id="redoBtn" onclick="redoDot()" style="display:none">← Move my dot</button>
+    <button class="redo-btn" id="redoBtn" onclick="redoDot()">← Move my dot</button>
   </div>
 </div>
 
@@ -714,7 +714,7 @@ function placeDot(sx,sy){
   const hasRealDots = getShareDots().length > 0;
   OTHERS.forEach(({label,sx:ox,sy:oy,delay})=>addDot(ox,oy,'#1B7A68',label,delay,true));
   if(hasRealDots) setTimeout(fadeFakeDots, 1400);
-  document.getElementById('redoBtn').style.display='inline-flex';
+  document.getElementById('postPlaceRow').style.display='flex';
   setTimeout(()=>{ document.getElementById('reveal').classList.add('shown'); },1900);
   setTimeout(()=>{ document.getElementById('plotNote').style.display='block'; },2600);
 }
@@ -732,7 +732,7 @@ function redoDot(){
   plotHint.style.opacity='1';
   document.getElementById('reveal').classList.remove('shown');
   document.getElementById('plotNote').style.display='none';
-  document.getElementById('redoBtn').style.display='none';
+  document.getElementById('postPlaceRow').style.display='none';
 }
 
 function screenToPlot(e){
