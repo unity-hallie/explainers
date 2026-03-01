@@ -1484,14 +1484,18 @@ function loadSharedDots() {
   const dots = decodeDotsParam(raw);
   if (!dots.length) return;
 
-  // Save to localStorage (merge, dedupe by position)
+  // Save to localStorage (merge, dedupe by position rounded to ~4% grid)
+  const posKey = d => `${Math.round(d.sx*25)},${Math.round(d.sy*25)}`;
   const existing = getShareDots();
-  const merged = [...dots, ...existing].slice(0,20);
+  const seenPos = new Set(existing.map(posKey));
+  const seenName = new Set(existing.map(d => d.name).filter(Boolean));
+  const newDots = dots.filter(d => !seenPos.has(posKey(d)) && !(d.name && seenName.has(d.name)));
+  const merged = [...newDots, ...existing].slice(0, 20);
   saveSharedDots(merged);
+  saveState();
 
-  // Render incoming dots on the plot with brass color
-  // First dot = the direct sharer (named), rest = anonymous
-  dots.forEach((d, i) => {
+  // Render only genuinely new dots
+  newDots.forEach((d, i) => {
     const label = i === 0 ? (d.name || 'the sharer') : (d.name && d.name !== 'anonymous' ? d.name : `person ${i+1}`);
     addDot(d.sx, d.sy, '#B87D2A', label, i * 200);
   });
