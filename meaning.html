@@ -386,21 +386,22 @@ hr.full { max-width: none; }
     <svg id="plot" viewBox="0 0 540 500" xmlns="http://www.w3.org/2000/svg"></svg>
   </div>
   <p class="plot-hint" id="plotHint">Click anywhere on the graph.</p>
+  <div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap;justify-content:center">
+    <div class="share-name-wrap" style="margin-bottom:0">
+      <span class="share-name-label">Your name:</span>
+      <input class="share-name-input" id="shareNameInput" type="text" placeholder="optional" maxlength="24">
+    </div>
+    <button class="redo-btn" id="redoBtn" onclick="redoDot()" style="display:none">← Move my dot</button>
+  </div>
 </div>
 
 <div class="reveal" id="reveal">
   <p>Where you put it is a fact about you, not about hot dogs.</p>
   <div class="share-bar" id="plotShareBar">
-    <div style="display:flex;flex-direction:column;gap:8px;width:100%">
-      <div class="share-name-wrap">
-        <span class="share-name-label">Your name (optional):</span>
-        <input class="share-name-input" id="shareNameInput" type="text" placeholder="anonymous" maxlength="24">
-      </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-        <button class="share-btn" onclick="shareLink()">↗ Share your dot</button>
-        <button class="png-btn" onclick="exportPNG()">↓ Save as image</button>
-        <span class="share-copied" id="shareCopied">Link copied!</span>
-      </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <button class="share-btn" onclick="shareLink()">↗ Share your dot</button>
+      <button class="png-btn" onclick="exportPNG()">↓ Save as image</button>
+      <span class="share-copied" id="shareCopied">Link copied!</span>
     </div>
   </div>
 </div>
@@ -669,23 +670,34 @@ let plotDone=false;
 const plotHint=document.getElementById('plotHint');
 
 const OTHERS=[
-  {label:'your sister',   sx:.76,sy:.36,delay:280},
-  {label:'a vendor',      sx:.20,sy:.88,delay:460},
-  {label:'a linguist',    sx:.54,sy:.54,delay:640},
-  {label:'your professor',sx:.82,sy:.60,delay:820},
-  {label:'a 6-year-old',  sx:.30,sy:.72,delay:1000},
+  {label:'SpongeBob',     sx:.76,sy:.36,delay:280},
+  {label:'Batman',        sx:.20,sy:.88,delay:460},
+  {label:'Kermit',        sx:.54,sy:.54,delay:640},
+  {label:'Beyoncé',       sx:.82,sy:.60,delay:820},
+  {label:'Bugs Bunny',    sx:.30,sy:.72,delay:1000},
   {label:'the internet',  sx:.48,sy:.30,delay:1180},
 ];
 
-function addDot(sx,sy,color,label,delay=0){
+const fakeDotEls=[];
+function addDot(sx,sy,color,label,delay=0,fake=false){
   setTimeout(()=>{
     const{x,y}=toSVG(sx,sy);
-    const c=svgEl('circle',{cx:x,cy:y,r:0,fill:color,style:'transition:r .55s cubic-bezier(.34,1.56,.64,1)'});
+    const c=svgEl('circle',{cx:x,cy:y,r:0,fill:color,style:'transition:r .55s cubic-bezier(.34,1.56,.64,1), opacity .6s ease'});
     const l=svgTxt(label,{x:x+11,y:y-9,fill:color,'font-size':label==='you'?'12':'10','font-weight':label==='you'?'700':'500','font-family':'system-ui,sans-serif',opacity:0,style:'transition:opacity .4s ease .1s'});
     plotEl.appendChild(c); plotEl.appendChild(l);
     requestAnimationFrame(()=>{ c.setAttribute('r',label==='you'?9:7); l.setAttribute('opacity',label==='you'?1:.82); });
+    if(fake){ fakeDotEls.push(c,l); }
   },delay);
 }
+
+function fadeFakeDots(){
+  fakeDotEls.forEach(el=>{
+    el.style.transition='opacity .8s ease';
+    el.setAttribute('opacity', el.tagName==='circle' ? '.18' : '.12');
+  });
+}
+
+let myDotCircle=null, myDotLabel=null;
 
 function placeDot(sx,sy){
   if(plotDone)return; plotDone=true;
@@ -693,10 +705,34 @@ function placeDot(sx,sy){
   document.getElementById('hdHint').setAttribute('opacity',0);
   plotHint.style.opacity='0';
   document.getElementById('plotOuter').classList.add('placed');
-  addDot(sx,sy,'#D94F2A','you',0);
-  OTHERS.forEach(({label,sx:ox,sy:oy,delay})=>addDot(ox,oy,'#1B7A68',label,delay));
+  // Place user dot — capture elements for redo
+  const{x,y}=toSVG(sx,sy);
+  myDotCircle=svgEl('circle',{cx:x,cy:y,r:0,fill:'#D94F2A',style:'transition:r .55s cubic-bezier(.34,1.56,.64,1)'});
+  myDotLabel=svgTxt('you',{x:x+11,y:y-9,fill:'#D94F2A','font-size':'12','font-weight':'700','font-family':'system-ui,sans-serif',opacity:0,style:'transition:opacity .4s ease .1s'});
+  plotEl.appendChild(myDotCircle); plotEl.appendChild(myDotLabel);
+  requestAnimationFrame(()=>{ myDotCircle.setAttribute('r',9); myDotLabel.setAttribute('opacity',1); });
+  const hasRealDots = getShareDots().length > 0;
+  OTHERS.forEach(({label,sx:ox,sy:oy,delay})=>addDot(ox,oy,'#1B7A68',label,delay,true));
+  if(hasRealDots) setTimeout(fadeFakeDots, 1400);
+  document.getElementById('redoBtn').style.display='inline-flex';
   setTimeout(()=>{ document.getElementById('reveal').classList.add('shown'); },1900);
   setTimeout(()=>{ document.getElementById('plotNote').style.display='block'; },2600);
+}
+
+function redoDot(){
+  if(!plotDone)return;
+  plotDone=false; myDotSx=null; myDotSy=null;
+  // Remove user dot
+  myDotCircle?.remove(); myDotLabel?.remove();
+  myDotCircle=null; myDotLabel=null;
+  // Remove fake OTHERS dots
+  fakeDotEls.forEach(el=>el.remove()); fakeDotEls.length=0;
+  document.getElementById('plotOuter').classList.remove('placed');
+  document.getElementById('hdHint').setAttribute('opacity','.14');
+  plotHint.style.opacity='1';
+  document.getElementById('reveal').classList.remove('shown');
+  document.getElementById('plotNote').style.display='none';
+  document.getElementById('redoBtn').style.display='none';
 }
 
 function screenToPlot(e){
