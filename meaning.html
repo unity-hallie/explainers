@@ -143,6 +143,7 @@ body {
   background: white; border-radius: 12px; overflow: visible;
   box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 12px rgba(37,26,16,.06), 0 16px 48px rgba(37,26,16,.08);
 }
+@media (max-width: 500px) { #neighborhood { height: 320px; } }
 #lineCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px; pointer-events: none; }
 .word-chip {
   position: absolute; left: 50%; top: 50%;
@@ -158,7 +159,8 @@ body {
   background: white; color: var(--ink); border: 1.5px solid var(--grid);
   box-shadow: 0 2px 8px rgba(37,26,16,.07); cursor: pointer;
 }
-.word-chip.neighbor-chip:hover { border-color: var(--teal); color: var(--teal); box-shadow: 0 4px 16px rgba(27,122,104,.14); }
+.word-chip.neighbor-chip:hover,
+.word-chip.neighbor-chip:active { border-color: var(--teal); color: var(--teal); box-shadow: 0 4px 16px rgba(27,122,104,.14); }
 
 /* ── Reinforcement ────────────────────────────────────── */
 .reinforce-section { max-width: 720px; margin: 0 auto; padding: 56px 24px 48px; }
@@ -265,9 +267,35 @@ hr.full { max-width: none; }
 }
 .markov-note.shown { opacity: 1; pointer-events: auto; }
 
+/* ── Share ────────────────────────────────────────────── */
+.share-bar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--grid);
+}
+.share-btn, .png-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 20px; border-radius: 100px; border: 1.5px solid var(--grid);
+  background: white; font-size: .88em; font-weight: 600; font-family: inherit;
+  color: var(--ink-mid); cursor: pointer;
+  transition: border-color .18s, color .18s, box-shadow .18s, transform .18s;
+  box-shadow: 0 1px 4px rgba(37,26,16,.06);
+}
+.share-btn:hover { border-color: var(--brass); color: var(--brass); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(184,125,42,.16); }
+.png-btn:hover { border-color: var(--teal); color: var(--teal); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(27,122,104,.14); }
+.share-copied { font-size: .82em; color: var(--teal); font-style: italic; opacity: 0; transition: opacity .3s ease; }
+.share-copied.shown { opacity: 1; }
+.share-name-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.share-name-input {
+  border: 1.5px solid var(--grid); border-radius: 8px; padding: 8px 14px;
+  font-size: .94em; font-family: inherit; color: var(--ink); background: white;
+  outline: none; transition: border-color .18s; width: 200px;
+}
+.share-name-input:focus { border-color: var(--brass); }
+.share-name-label { font-size: .84em; color: var(--ink-light); }
+
 /* ── Closing thanks ───────────────────────────────────── */
 .thanks { text-align: center; padding: 64px 24px 96px; }
-.thanks p { font-size: 1.05em; color: var(--ink-mid); line-height: 1.72; max-width: 480px; margin: 0 auto; }
+.thanks p { font-size: 1.05em; color: var(--ink-mid); line-height: 1.72; max-width: 480px; margin: 0 auto 20px; }
 
 /* ── Peek button + markov modal ───────────────────────── */
 .peek-btn {
@@ -306,6 +334,7 @@ hr.full { max-width: none; }
   box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 12px rgba(37,26,16,.06), 0 16px 48px rgba(37,26,16,.08);
   margin-bottom: 16px;
 }
+@media (max-width: 500px) { #biasNeighborhood { height: 300px; } }
 #biasLineCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px; pointer-events: none; }
 .bias-note { font-size: .88em; color: var(--ink-light); font-style: italic; line-height: 1.6; text-align: center; padding: 0 24px 16px; }
 
@@ -361,6 +390,19 @@ hr.full { max-width: none; }
 
 <div class="reveal" id="reveal">
   <p>Where you put it is a fact about you, not about hot dogs.</p>
+  <div class="share-bar" id="plotShareBar">
+    <div style="display:flex;flex-direction:column;gap:8px;width:100%">
+      <div class="share-name-wrap">
+        <span class="share-name-label">Your name (optional):</span>
+        <input class="share-name-input" id="shareNameInput" type="text" placeholder="anonymous" maxlength="24">
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <button class="share-btn" onclick="shareLink()">↗ Share your dot</button>
+        <button class="png-btn" onclick="exportPNG()">↓ Save as image</button>
+        <span class="share-copied" id="shareCopied">Link copied!</span>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="ai-note" id="plotNote" style="display:none">
@@ -550,6 +592,11 @@ hr.full { max-width: none; }
 
 <div class="thanks">
   <p>Thanks for reading.</p>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;align-items:center">
+    <button class="share-btn" onclick="shareLink()">↗ Share your dot</button>
+    <button class="png-btn" onclick="exportPNG()">↓ Save graph as image</button>
+    <span class="share-copied" id="shareCopied2">Link copied!</span>
+  </div>
 </div>
 
 <hr class="full">
@@ -642,6 +689,7 @@ function addDot(sx,sy,color,label,delay=0){
 
 function placeDot(sx,sy){
   if(plotDone)return; plotDone=true;
+  myDotSx=sx; myDotSy=sy;
   document.getElementById('hdHint').setAttribute('opacity',0);
   plotHint.style.opacity='0';
   document.getElementById('plotOuter').classList.add('placed');
@@ -653,8 +701,9 @@ function placeDot(sx,sy){
 
 function screenToPlot(e){
   const rect=document.getElementById('plotOuter').getBoundingClientRect();
-  const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
-  const cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
+  const touch=e.changedTouches?e.changedTouches[0]:e.touches?e.touches[0]:null;
+  const cx=(touch?touch.clientX:e.clientX)-rect.left;
+  const cy=(touch?touch.clientY:e.clientY)-rect.top;
   return{svgX:cx*(VW/rect.width),svgY:cy*(VH/rect.height)};
 }
 document.getElementById('plotOuter').addEventListener('click',e=>{
@@ -1263,6 +1312,7 @@ window.addEventListener('load', () => {
   renderNbhd(currentCenter, false);
   renderBiasNbhd('A', false);
   renderMarkov();
+  loadSharedDots();
 });
 
 function openMarkovModal() {
@@ -1322,6 +1372,114 @@ function resetChoice(){
   document.getElementById('consequenceWrap').classList.remove('shown');
   document.getElementById('convoPanels').innerHTML='';
 }
+
+// ═══════════════════════════════════════════════
+// SHARE LINK
+// ═══════════════════════════════════════════════
+// Encoding: each dot = 4 hex chars (XX=x 0-255, YY=y 0-255) + up to 12 chars name (url-encoded)
+// Format: ?dots=XXYY_name,XXYY_name,...  newest first, max 7
+// Own dot stored in localStorage under 'myDot'
+
+let myDotSx = null, myDotSy = null;
+
+function encodeDotsParam(dots) {
+  // dots = [{sx, sy, name}]
+  return dots.slice(0,7).map(d => {
+    const x = Math.round(d.sx * 255).toString(16).padStart(2,'0');
+    const y = Math.round(d.sy * 255).toString(16).padStart(2,'0');
+    const n = encodeURIComponent((d.name||'').slice(0,12));
+    return `${x}${y}_${n}`;
+  }).join(',');
+}
+
+function decodeDotsParam(str) {
+  if (!str) return [];
+  return str.split(',').map(s => {
+    const [coords, name] = s.split('_');
+    if (!coords || coords.length < 4) return null;
+    const sx = parseInt(coords.slice(0,2),16) / 255;
+    const sy = parseInt(coords.slice(2,4),16) / 255;
+    return {sx, sy, name: decodeURIComponent(name||'')};
+  }).filter(Boolean);
+}
+
+function getShareDots() {
+  // Load existing dots from localStorage
+  try { return JSON.parse(localStorage.getItem('sharedDots')||'[]'); } catch { return []; }
+}
+
+function saveSharedDots(dots) {
+  try { localStorage.setItem('sharedDots', JSON.stringify(dots.slice(0,20))); } catch {}
+}
+
+function shareLink() {
+  if (myDotSx === null) { alert('Place your hot dog first!'); return; }
+  const name = (document.getElementById('shareNameInput')?.value||'').trim() || 'anonymous';
+  // Build dots array: my dot first, then existing shared dots from URL/localStorage
+  const existing = getShareDots();
+  const allDots = [{sx: myDotSx, sy: myDotSy, name}, ...existing];
+  const param = encodeDotsParam(allDots);
+  const url = `${location.origin}${location.pathname}?dots=${param}`;
+  navigator.clipboard.writeText(url).then(() => {
+    ['shareCopied','shareCopied2'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.classList.add('shown'); setTimeout(()=>el.classList.remove('shown'), 2200); }
+    });
+  }).catch(() => prompt('Copy this link:', url));
+}
+
+// On load: read ?dots= param, render incoming dots, save to localStorage
+function loadSharedDots() {
+  const params = new URLSearchParams(location.search);
+  const raw = params.get('dots');
+  if (!raw) return;
+  const dots = decodeDotsParam(raw);
+  if (!dots.length) return;
+
+  // Save to localStorage (merge, dedupe by position)
+  const existing = getShareDots();
+  const merged = [...dots, ...existing].slice(0,20);
+  saveSharedDots(merged);
+
+  // Render incoming dots on the plot with brass color
+  // First dot = the direct sharer (named), rest = anonymous
+  dots.forEach((d, i) => {
+    const label = i === 0 ? (d.name || 'the sharer') : (d.name && d.name !== 'anonymous' ? d.name : `person ${i+1}`);
+    addDot(d.sx, d.sy, '#B87D2A', label, i * 200);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// PNG EXPORT
+// ═══════════════════════════════════════════════
+function exportPNG() {
+  const svg = document.getElementById('plot');
+  const svgData = new XMLSerializer().serializeToString(svg);
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080; canvas.height = 1000;
+  const ctx2 = canvas.getContext('2d');
+  const img = new Image();
+  const blob = new Blob([svgData], {type:'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+  img.onload = () => {
+    ctx2.fillStyle = '#FDFAF6';
+    ctx2.fillRect(0,0,canvas.width,canvas.height);
+    ctx2.drawImage(img,0,0,canvas.width,canvas.height);
+    // Watermark
+    ctx2.font = '600 22px system-ui,sans-serif';
+    ctx2.fillStyle = 'rgba(160,128,112,.6)';
+    ctx2.textAlign = 'right';
+    ctx2.fillText('unity-hallie.github.io/explainers/meaning.html', canvas.width-24, canvas.height-24);
+    URL.revokeObjectURL(url);
+    const a = document.createElement('a');
+    a.download = 'my-hot-dog.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  };
+  img.src = url;
+}
+
+// Read shared dots on load (added to the combined load listener below)
 </script>
 </body>
 </html>
