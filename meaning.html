@@ -1487,17 +1487,42 @@ function loadSharedDots() {
   // Save to localStorage (merge, dedupe by position rounded to ~4% grid)
   const posKey = d => `${Math.round(d.sx*25)},${Math.round(d.sy*25)}`;
   const existing = getShareDots();
-  const seenPos = new Set(existing.map(posKey));
+  const existingByPos = new Map(existing.map(d => [posKey(d), d]));
   const seenName = new Set(existing.map(d => d.name).filter(Boolean));
-  const newDots = dots.filter(d => !seenPos.has(posKey(d)) && !(d.name && seenName.has(d.name)));
+
+  const newDots = []; // truly new positions
+  const clusterDots = []; // same position, different name
+
+  dots.forEach(d => {
+    if (d.name && seenName.has(d.name)) return; // exact name match — skip
+    const clash = existingByPos.get(posKey(d));
+    if (clash) {
+      clusterDots.push({clash, incoming: d});
+    } else {
+      newDots.push(d);
+    }
+  });
+
   const merged = [...newDots, ...existing].slice(0, 20);
   saveSharedDots(merged);
   saveState();
 
-  // Render only genuinely new dots
+  // Render truly new dots
   newDots.forEach((d, i) => {
     const label = i === 0 ? (d.name || 'the sharer') : (d.name && d.name !== 'anonymous' ? d.name : `person ${i+1}`);
     addDot(d.sx, d.sy, '#B87D2A', label, i * 200);
+  });
+
+  // For position clashes, update existing dot label in the SVG to append "+1"
+  clusterDots.forEach(({clash}) => {
+    const {x, y} = toSVG(clash.sx, clash.sy);
+    Array.from(plotEl.querySelectorAll('text')).forEach(el => {
+      if (Math.abs(+el.getAttribute('x') - (x + 11)) < 2 && Math.abs(+el.getAttribute('y') - (y - 9)) < 2) {
+        const current = el.textContent;
+        if (!current.match(/\+\d+$/)) el.textContent = current + ' +1';
+        else el.textContent = current.replace(/\+(\d+)$/, (_, n) => `+${+n + 1}`);
+      }
+    });
   });
 }
 
