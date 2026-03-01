@@ -598,6 +598,7 @@ hr.full { max-width: none; }
     <button class="png-btn" onclick="exportPNG()">↓ Save graph as image</button>
     <span class="share-copied" id="shareCopied2">Link copied!</span>
   </div>
+  <p style="margin-top:40px"><button onclick="startFresh()" style="background:none;border:none;font-family:inherit;font-size:.8em;color:var(--ink-light);cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-style:dotted">Start fresh</button></p>
 </div>
 
 <hr class="full">
@@ -715,7 +716,7 @@ function placeDot(sx,sy){
   OTHERS.forEach(({label,sx:ox,sy:oy,delay})=>addDot(ox,oy,'#1B7A68',label,delay,true));
   if(hasRealDots) setTimeout(fadeFakeDots, 1400);
   document.getElementById('postPlaceRow').style.display='flex';
-  setTimeout(()=>{ document.getElementById('reveal').classList.add('shown'); },1900);
+  setTimeout(()=>{ document.getElementById('reveal').classList.add('shown'); saveState(); },1900);
   setTimeout(()=>{ document.getElementById('plotNote').style.display='block'; },2600);
 }
 
@@ -880,9 +881,9 @@ function getOrCreate(word){
 function navigateTo(word){
   if(word===currentCenter)return;
   currentCenter=word;
-  // Sync starters
   document.querySelectorAll('.starter-chip').forEach(c=>c.classList.toggle('active',c.textContent===word));
   renderNbhd(word,true);
+  saveState();
 }
 
 function renderNbhd(word,animate){
@@ -1109,6 +1110,7 @@ function rateResponseC(rating) {
   const result = document.getElementById('ratingResultC');
   result.innerHTML = RATING_RESULTS['C'][rating];
   result.classList.add('shown');
+  saveState();
 }
 
 const RATING_RESULTS = {
@@ -1139,6 +1141,7 @@ function rateResponse(which, rating) {
   const result = document.getElementById('ratingResult' + which);
   result.innerHTML = RATING_RESULTS[which][rating];
   result.classList.add('shown');
+  saveState();
 }
 
 // ═══════════════════════════════════════════════
@@ -1335,6 +1338,7 @@ function renderMarkov() {
 function pickWord(word) {
   markovWords.push(word);
   renderMarkov();
+  saveState();
 }
 
 function markovReset() {
@@ -1348,7 +1352,14 @@ window.addEventListener('load', () => {
   renderNbhd(currentCenter, false);
   renderBiasNbhd('A', false);
   renderMarkov();
-  loadSharedDots();
+  // URL params take priority over saved state
+  const params = new URLSearchParams(location.search);
+  if (params.get('dots')) {
+    loadSharedDots();
+  } else {
+    const state = loadState();
+    if (state) restoreState(state);
+  }
 });
 
 function openMarkovModal() {
@@ -1401,6 +1412,7 @@ function choose(option){
   });
   document.getElementById('consequenceWrap').classList.add('shown');
   requestAnimationFrame(()=>document.querySelectorAll('.convo-exchange .msg,.convo-note').forEach(el=>el.style.opacity='1'));
+  saveState();
 }
 function resetChoice(){
   chosenOption=null;
@@ -1515,7 +1527,100 @@ function exportPNG() {
   img.src = url;
 }
 
-// Read shared dots on load (added to the combined load listener below)
+// ═══════════════════════════════════════════════
+// STATE PERSISTENCE
+// ═══════════════════════════════════════════════
+const STATE_KEY = 'meaning_state';
+
+let _restoring = false;
+function saveState() {
+  if (_restoring) return;
+  try {
+    const state = {
+      dot: myDotSx !== null ? {sx: myDotSx, sy: myDotSy} : null,
+      name: document.getElementById('shareNameInput')?.value || '',
+      nbhdCenter: currentCenter,
+      reinforcement: chosenOption,
+      ratings: {...ratingBallot},
+      markovWords: [...markovWords],
+      friends: getShareDots(),
+    };
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+  } catch {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function restoreState(state) {
+  if (!state) return;
+  _restoring = true;
+  setTimeout(() => { _restoring = false; }, 800);
+
+  // Friends — render immediately in brass
+  if (state.friends?.length) {
+    saveSharedDots(state.friends);
+    state.friends.forEach((d, i) => {
+      const label = d.name && d.name !== 'anonymous' ? d.name : (i === 0 ? 'a friend' : `friend ${i+1}`);
+      addDot(d.sx, d.sy, '#B87D2A', label, i * 120);
+    });
+  }
+
+  // Dot
+  if (state.dot) {
+    setTimeout(() => {
+      placeDot(state.dot.sx, state.dot.sy);
+      if (state.name) {
+        const inp = document.getElementById('shareNameInput');
+        if (inp) inp.value = state.name;
+      }
+    }, 200);
+  }
+
+  // Neighborhood center
+  if (state.nbhdCenter && state.nbhdCenter !== 'home') {
+    setTimeout(() => navigateTo(state.nbhdCenter), 300);
+  }
+
+  // Reinforcement choice
+  if (state.reinforcement) {
+    setTimeout(() => choose(state.reinforcement), 400);
+  }
+
+  // Ratings
+  if (state.ratings) {
+    setTimeout(() => {
+      if (state.ratings.A) rateResponse('A', state.ratings.A);
+      if (state.ratings.B) rateResponse('B', state.ratings.B);
+      if (state.ratings.C) rateResponseC(state.ratings.C);
+    }, 500);
+  }
+
+  // Markov words
+  if (state.markovWords?.length) {
+    setTimeout(() => {
+      markovWords = [...state.markovWords];
+      renderMarkov();
+    }, 600);
+  }
+}
+
+function startFresh() {
+  if (!confirm('Start over? This will clear your dot, choices, and saved friends.')) return;
+  localStorage.removeItem(STATE_KEY);
+  localStorage.removeItem('sharedDots');
+  location.href = location.pathname; // strip URL params too
+}
+
+// Save name changes
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('shareNameInput')?.addEventListener('input', saveState);
+});
 </script>
 </body>
 </html>
