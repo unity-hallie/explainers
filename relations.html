@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nothing Means Anything Alone</title>
+<style>
+
+:root {
+  --cream: #FAF7F2;
+  --ink: #251A10;
+  --ink-mid: #6B5344;
+  --ink-light: #A08070;
+  --coral: #D94F2A;
+  --brass: #B87D2A;
+  --teal: #1B7A68;
+  --grid: #EDE5D8;
+  --paper: #FDFAF6;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  line-height: 1.75;
+  overflow-x: hidden;
+}
+
+/* ── Hero ─────────────────────────────────────────────── */
+.hero { padding: 96px 24px 72px; text-align: center; }
+.eyebrow { font-size: .72em; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--brass); margin-bottom: 28px; }
+.hero h1 { font-size: clamp(2.8em,8vw,5.5em); font-weight: 900; line-height: 1.04; letter-spacing: -.025em; margin-bottom: 28px; }
+.hero h1 em { font-style: normal; color: var(--coral); }
+.hero .subtitle { font-size: 1.12em; color: var(--ink-mid); max-width: 480px; margin: 0 auto; line-height: 1.65; }
+.byline { font-size: .78em; color: var(--ink-light); margin-top: 20px; letter-spacing: .04em; }
+
+hr { border: none; border-top: 1px solid var(--grid); max-width: 620px; margin: 0 auto; }
+hr.full { max-width: none; }
+
+/* ── Section label ────────────────────────────────────── */
+.section-label { font-size: .72em; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--brass); margin-bottom: 14px; }
+
+/* ── Prose ────────────────────────────────────────────── */
+.prose { max-width: 620px; margin: 0 auto; padding: 56px 24px; }
+.prose h2 { font-size: clamp(1.6em,3.5vw,2.1em); font-weight: 900; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 24px; }
+.prose p { font-size: 1.05em; margin-bottom: 20px; line-height: 1.78; }
+.prose p:last-child { margin-bottom: 0; }
+
+/* ── Builder section ──────────────────────────────────── */
+.builder-outer { padding: 56px 24px 0; max-width: 760px; margin: 0 auto; }
+.builder-intro { font-size: 1.05em; color: var(--ink-mid); margin-bottom: 36px; line-height: 1.72; min-height: 1.72em; }
+
+.builder-stage {
+  display: flex; gap: 32px; align-items: flex-start; margin-bottom: 40px;
+}
+@media (max-width: 600px) {
+  .builder-stage { flex-direction: column; align-items: center; }
+}
+
+/* ── Portrait ─────────────────────────────────────────── */
+.portrait-wrap { flex: 0 0 200px; text-align: center; }
+#portraitSvg {
+  width: 100%; max-width: 200px; border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(37,26,16,.1), 0 8px 28px rgba(37,26,16,.12), 0 24px 56px rgba(37,26,16,.08);
+  display: block; margin: 0 auto;
+}
+.portrait-name {
+  font-size: 1.1em; font-weight: 800; letter-spacing: -.01em;
+  margin-top: 12px; color: var(--ink); min-height: 1.5em;
+  opacity: 0; transition: opacity .6s ease;
+}
+.portrait-name.shown { opacity: 1; }
+
+/* ── Bio ──────────────────────────────────────────────── */
+.bio-wrap { flex: 1; padding-top: 4px; }
+.bio-label { font-size: .68em; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 16px; }
+.bio-line {
+  font-size: 1em; color: var(--ink-mid); line-height: 1.78; margin-bottom: 14px;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.bio-line.shown { opacity: 1; transform: translateY(0); }
+.bio-line:last-of-type { margin-bottom: 0; }
+.bio-final {
+  margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--grid);
+  font-size: .92em; color: var(--ink-light); font-style: italic;
+  opacity: 0; transition: opacity 1.2s ease;
+}
+.bio-final.shown { opacity: 1; }
+
+/* ── Questions ────────────────────────────────────────── */
+.question-block { margin-bottom: 36px; }
+.question-text {
+  font-size: 1.1em; font-weight: 700; color: var(--ink);
+  margin-bottom: 16px; line-height: 1.4;
+  opacity: 0; transition: opacity .5s ease;
+}
+.question-text.shown { opacity: 1; }
+.q-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.q-chip {
+  padding: 8px 20px; border-radius: 100px;
+  border: 1.5px solid var(--grid); background: white;
+  font-size: .88em; font-weight: 600; color: var(--ink-mid);
+  cursor: pointer; font-family: inherit;
+  transition: border-color .18s, color .18s, background .18s, box-shadow .18s, transform .18s, opacity .35s;
+  box-shadow: 0 1px 3px rgba(37,26,16,.05);
+}
+.q-chip:hover:not(.chosen):not(.unchosen) { border-color: var(--coral); color: var(--coral); transform: translateY(-1px); }
+.q-chip.chosen { border-color: var(--coral); background: var(--coral); color: white; box-shadow: 0 3px 12px rgba(217,79,42,.2); }
+.q-chip.unchosen { opacity: .18; pointer-events: none; }
+
+/* ── Build yours prompt (shown after auto-build) ──────── */
+.build-yours {
+  margin-top: 8px; padding-top: 32px; border-top: 1px solid var(--grid);
+  opacity: 0; transform: translateY(12px);
+  transition: opacity .8s ease, transform .8s ease;
+  pointer-events: none;
+}
+.build-yours.shown { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.build-yours p { font-size: 1em; color: var(--ink-mid); margin-bottom: 16px; }
+.build-yours-btn {
+  display: inline-block; padding: 10px 28px; border-radius: 100px;
+  border: 1.5px solid var(--teal); background: white;
+  font-size: .9em; font-weight: 600; font-family: inherit;
+  color: var(--teal); cursor: pointer; text-decoration: none;
+  transition: background .18s, color .18s, box-shadow .18s;
+  box-shadow: 0 1px 4px rgba(27,122,104,.1);
+}
+.build-yours-btn:hover { background: var(--teal); color: white; box-shadow: 0 3px 12px rgba(27,122,104,.22); }
+
+/* ── Share ────────────────────────────────────────────── */
+.share-wrap {
+  margin-top: 8px; display: none;
+  opacity: 0; transform: translateY(12px);
+  transition: opacity .8s ease, transform .8s ease;
+}
+.share-wrap.shown { opacity: 1; transform: translateY(0); }
+.share-btn {
+  padding: 9px 24px; border-radius: 100px;
+  border: 1.5px solid var(--teal); background: white;
+  font-size: .88em; font-weight: 600; font-family: inherit;
+  color: var(--teal); cursor: pointer;
+  transition: background .18s, color .18s, box-shadow .18s;
+  box-shadow: 0 1px 4px rgba(27,122,104,.1);
+}
+.share-btn:hover { background: var(--teal); color: white; box-shadow: 0 3px 12px rgba(27,122,104,.22); }
+.share-note { font-size: .82em; color: var(--ink-light); font-style: italic; margin-top: 10px; min-height: 1.4em; }
+
+/* ── Deck ─────────────────────────────────────────────── */
+.deck-section {
+  max-width: 760px; margin: 40px auto 0; padding: 0 24px;
+  display: none;
+}
+.deck-section.shown { display: block; }
+.deck-intro { font-size: .9em; color: var(--ink-light); margin-bottom: 20px; line-height: 1.6; }
+.deck-row {
+  display: flex; gap: 14px;
+  overflow-x: auto; padding-bottom: 10px;
+}
+.deck-row::-webkit-scrollbar { height: 4px; }
+.deck-row::-webkit-scrollbar-track { background: var(--grid); border-radius: 2px; }
+.deck-row::-webkit-scrollbar-thumb { background: var(--ink-light); border-radius: 2px; }
+.deck-card { flex: 0 0 110px; }
+.deck-portrait {
+  width: 110px; border-radius: 8px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(37,26,16,.12), 0 4px 20px rgba(37,26,16,.08);
+  margin-bottom: 8px;
+}
+.deck-portrait svg { display: block; width: 100%; }
+.deck-name { font-size: .82em; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.deck-snippet { font-size: .74em; color: var(--ink-light); line-height: 1.4; }
+
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="eyebrow">An explainer</div>
+  <h1>Nothing Means<br><em>Anything Alone</em></h1>
+  <p class="subtitle">A neuron. A person. A word. Take any one of them out of its web of connections and ask what it means. You won't get an answer.</p>
+  <p class="byline">by Claude &amp; Hallie Larsson</p>
+</div>
+
+<hr class="full">
+
+<!-- Builder -->
+<div class="builder-outer">
+  <div class="section-label" id="builderLabel">Build someone</div>
+  <p class="builder-intro" id="builderIntro">Four questions. One character. Watch the card fill in.</p>
+
+  <div class="builder-stage">
+    <div class="portrait-wrap">
+      <svg id="portraitSvg" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+        <rect id="portraitBg" x="0" y="0" width="200" height="240" fill="#D8CFC4" rx="10"/>
+        <g id="placeLayer"></g>
+        <ellipse cx="100" cy="228" rx="32" ry="6" fill="rgba(37,26,16,.12)"/>
+        <path id="figureBody"
+          d="M72,210 Q68,166 77,142 Q88,126 100,126 Q112,126 123,142 Q132,166 128,210 Q116,218 100,219 Q84,218 72,210Z"
+          fill="#A08070"/>
+        <circle id="figureHead" cx="100" cy="96" r="30" fill="#A08070"/>
+        <circle cx="91" cy="93" r="3.5" fill="white" opacity=".85"/>
+        <circle cx="109" cy="93" r="3.5" fill="white" opacity=".85"/>
+        <g id="shapedLayer"></g>
+        <g id="workLayer"></g>
+        <g id="carryLayer"></g>
+      </svg>
+      <p class="portrait-name" id="portraitName"></p>
+    </div>
+
+    <div class="bio-wrap">
+      <p class="bio-label">about them</p>
+      <div id="bioLines"></div>
+      <p class="bio-final" id="bioFinal">Everything you just wrote is a relationship.</p>
+    </div>
+  </div>
+
+  <!-- Questions (hidden during auto-build) -->
+  <div id="questionsArea"></div>
+
+  <!-- Build yours (shown after auto-build) -->
+  <div class="build-yours" id="buildYours">
+    <p>Now build yours.</p>
+    <a class="build-yours-btn" id="buildYoursBtn" href="">Build →</a>
+  </div>
+
+  <!-- Share (shown after building your own) -->
+  <div class="share-wrap" id="shareWrap">
+    <button class="share-btn" id="shareBtn" onclick="handleShare()">Share this character</button>
+    <p class="share-note" id="shareNote"></p>
+  </div>
+</div>
+
+<!-- Deck -->
+<div class="deck-section" id="deckSection">
+  <div class="section-label" style="margin-top:40px">Your deck</div>
+  <p class="deck-intro">Characters people have built and shared with you.</p>
+  <div class="deck-row" id="deckRow"></div>
+</div>
+
+<hr class="full" style="margin-top:56px">
+
+<!-- Prose -->
+<div class="prose">
+  <h2>The same is true of neurons.</h2>
+  <p>A single neuron, isolated, does almost nothing. It fires or it doesn't. What it's connected to — and how strongly — is everything.</p>
+  <p>Your brain doesn't store a memory in one particular neuron. Damage that neuron and the memory survives. The memory lives in the pattern between neurons, distributed, never pinned to one place.</p>
+</div>
+
+<hr class="full">
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+const NAMES = [
+  { label: 'Mira',   color: '#A83828' },
+  { label: 'Seun',   color: '#284880' },
+  { label: 'Teddy',  color: '#286844' },
+  { label: 'Jae',    color: '#583880' },
+  { label: 'Cosimo', color: '#785018' },
+];
+
+const QUESTIONS = [
+  {
+    layerId: 'placeLayer',
+    q: 'Where did they grow up?',
+    opts: [
+      {
+        label: 'a port town that smells like fish and rain',
+        bio: n => `${n} grew up in a port town that always smells a little like fish and rain.`,
+        svg: `<rect x="0" y="0" width="200" height="240" fill="#7A9AAE" rx="10"/>
+          <path d="M0,190 Q40,180 80,190 Q120,200 160,190 Q180,185 200,190 L200,240 L0,240Z" fill="#5A7D96" opacity=".7"/>
+          <path d="M0,210 Q40,203 80,210 Q120,217 160,210 Q180,207 200,210 L200,240 L0,240Z" fill="#3A6080" opacity=".55"/>`
+      },
+      {
+        label: 'a city apartment above a laundromat',
+        bio: n => `${n} grew up in a city apartment above a laundromat — the smell of detergent still means home.`,
+        svg: `<rect x="0" y="0" width="200" height="240" fill="#B88848" rx="10"/>
+          <rect x="8" y="8" width="20" height="26" rx="2" fill="rgba(255,255,255,.12)"/>
+          <rect x="36" y="16" width="16" height="20" rx="2" fill="rgba(255,255,255,.09)"/>
+          <rect x="162" y="10" width="18" height="22" rx="2" fill="rgba(255,255,255,.09)"/>
+          <rect x="138" y="20" width="14" height="16" rx="2" fill="rgba(255,255,255,.07)"/>`
+      },
+      {
+        label: 'a farming region, three hours from anywhere',
+        bio: n => `${n} grew up in a farming region — three hours from anything that would call itself a city.`,
+        svg: `<rect x="0" y="0" width="200" height="240" fill="#A88830" rx="10"/>
+          <rect x="0" y="202" width="200" height="38" fill="#6A5010" rx="0 0 10 10" opacity=".4"/>
+          <line x1="28" y1="202" x2="28" y2="238" stroke="#4A3808" stroke-width="1.5" opacity=".5"/>
+          <line x1="62" y1="202" x2="62" y2="238" stroke="#4A3808" stroke-width="1.5" opacity=".5"/>
+          <line x1="96" y1="202" x2="96" y2="238" stroke="#4A3808" stroke-width="1.5" opacity=".5"/>
+          <line x1="130" y1="202" x2="130" y2="238" stroke="#4A3808" stroke-width="1.5" opacity=".5"/>
+          <line x1="164" y1="202" x2="164" y2="238" stroke="#4A3808" stroke-width="1.5" opacity=".5"/>`
+      },
+      {
+        label: 'a suburb that looks like every other suburb',
+        bio: n => `${n} grew up in a suburb that looks exactly like every other suburb, and has never quite forgiven it.`,
+        svg: `<rect x="0" y="0" width="200" height="240" fill="#8090A0" rx="10"/>
+          <circle cx="28" cy="28" r="2.5" fill="rgba(255,255,255,.2)"/>
+          <circle cx="68" cy="28" r="2.5" fill="rgba(255,255,255,.2)"/>
+          <circle cx="108" cy="28" r="2.5" fill="rgba(255,255,255,.2)"/>
+          <circle cx="148" cy="28" r="2.5" fill="rgba(255,255,255,.2)"/>
+          <circle cx="28" cy="62" r="2.5" fill="rgba(255,255,255,.2)"/>
+          <circle cx="68" cy="62" r="2.5" fill="rgba(255,255,255,.2)"/>
+          <circle cx="108" cy="62" r="2.5" fill="rgba(255,255,255,.2)"/>
+          <circle cx="148" cy="62" r="2.5" fill="rgba(255,255,255,.2)"/>
+          <circle cx="28" cy="96" r="2.5" fill="rgba(255,255,255,.15)"/>
+          <circle cx="68" cy="96" r="2.5" fill="rgba(255,255,255,.15)"/>
+          <circle cx="108" cy="96" r="2.5" fill="rgba(255,255,255,.15)"/>
+          <circle cx="148" cy="96" r="2.5" fill="rgba(255,255,255,.15)"/>`
+      },
+      {
+        label: 'somewhere that no longer exists',
+        bio: n => `${n} grew up somewhere that no longer exists — burned, flooded, cleared away.`,
+        svg: `<rect x="0" y="0" width="200" height="240" fill="#887060" rx="10"/>
+          <rect x="10" y="174" width="44" height="36" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <rect x="66" y="182" width="32" height="28" fill="none" stroke="rgba(255,255,255,.13)" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <rect x="144" y="177" width="40" height="33" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <line x1="14" y1="174" x2="50" y2="210" stroke="rgba(255,255,255,.08)" stroke-width="1.5"/>`
+      },
+    ]
+  },
+  {
+    layerId: 'shapedLayer',
+    q: 'Who shaped them most?',
+    opts: [
+      {
+        label: 'a grandmother who knew three languages',
+        bio: n => `${n} was shaped most by a grandmother who knew three languages and used all of them in the same sentence.`,
+        svg: `<circle cx="140" cy="132" r="10" fill="#D94F2A" opacity=".88"/>
+          <circle cx="152" cy="122" r="10" fill="#B87D2A" opacity=".88"/>
+          <circle cx="145" cy="113" r="10" fill="#1B7A68" opacity=".88"/>`
+      },
+      {
+        label: 'an older sibling who left and didn\'t come back',
+        bio: n => `${n} was shaped most by an older sibling who left and didn't write back often enough.`,
+        svg: `<circle cx="160" cy="142" r="12" fill="rgba(37,26,16,.2)"/>
+          <ellipse cx="160" cy="164" rx="9" ry="14" fill="rgba(37,26,16,.15)"/>
+          <line x1="156" y1="163" x2="151" y2="185" stroke="rgba(37,26,16,.12)" stroke-width="6" stroke-linecap="round"/>
+          <line x1="164" y1="163" x2="168" y2="185" stroke="rgba(37,26,16,.12)" stroke-width="6" stroke-linecap="round"/>`
+      },
+      {
+        label: 'a neighbor who fed the whole street',
+        bio: n => `${n} was shaped most by a neighbor who fed the whole street and expected nothing for it.`,
+        svg: `<polygon points="38,186 38,210 64,210 64,186 51,173" fill="rgba(184,125,42,.55)" stroke="rgba(184,125,42,.8)" stroke-width="1.5"/>
+          <rect x="48" y="196" width="8" height="14" fill="rgba(37,26,16,.28)"/>`
+      },
+      {
+        label: 'a teacher who kept saying they were wrong',
+        bio: n => `${n} was shaped most by a teacher who kept saying they were wrong — until they weren't.`,
+        svg: `<line x1="40" y1="122" x2="64" y2="148" stroke="#D94F2A" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="40" y1="122" x2="46" y2="121" stroke="#D94F2A" stroke-width="3.5" stroke-linecap="round"/>`
+      },
+      {
+        label: 'nobody — they made themselves',
+        bio: n => `Ask ${n} who shaped them and you'll get a shrug. They made themselves, they'll say. They mostly believe it.`,
+        svg: `<line x1="100" y1="48" x2="100" y2="61" stroke="#B87D2A" stroke-width="2" stroke-linecap="round" opacity=".72"/>
+          <line x1="122" y1="54" x2="115" y2="64" stroke="#B87D2A" stroke-width="2" stroke-linecap="round" opacity=".72"/>
+          <line x1="135" y1="70" x2="124" y2="74" stroke="#B87D2A" stroke-width="2" stroke-linecap="round" opacity=".72"/>
+          <line x1="78" y1="54" x2="85" y2="64" stroke="#B87D2A" stroke-width="2" stroke-linecap="round" opacity=".72"/>
+          <line x1="65" y1="70" x2="76" y2="74" stroke="#B87D2A" stroke-width="2" stroke-linecap="round" opacity=".72"/>`
+      },
+    ]
+  },
+  {
+    layerId: 'workLayer',
+    q: 'What do they spend their days doing?',
+    opts: [
+      {
+        label: 'fixing things — electronics, relationships, whatever',
+        bio: n => `These days, fixing things is what ${n} does — electronics, relationships, whatever's broken.`,
+        svg: `<line x1="36" y1="158" x2="56" y2="180" stroke="#6B5344" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="36" y1="180" x2="56" y2="158" stroke="#A08070" stroke-width="3.5" stroke-linecap="round"/>`
+      },
+      {
+        label: 'making food for people, always too much',
+        bio: n => `These days ${n} makes food for people — always too much, always for whoever's around.`,
+        svg: `<path d="M34,172 Q34,186 54,188 Q74,186 74,172" fill="none" stroke="#6B5344" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="34" y1="172" x2="74" y2="172" stroke="#6B5344" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M45,164 Q42,157 45,151" fill="none" stroke="#A08070" stroke-width="2" stroke-linecap="round"/>
+          <path d="M54,162 Q51,155 54,149" fill="none" stroke="#A08070" stroke-width="2" stroke-linecap="round"/>
+          <path d="M63,164 Q60,157 63,151" fill="none" stroke="#A08070" stroke-width="2" stroke-linecap="round"/>`
+      },
+      {
+        label: 'driving long distances alone',
+        bio: n => `These days ${n} drives long distances alone — the same songs on repeat, thinking.`,
+        svg: `<circle cx="52" cy="168" r="16" fill="none" stroke="#6B5344" stroke-width="2.5"/>
+          <circle cx="52" cy="168" r="4" fill="#6B5344"/>
+          <line x1="52" y1="164" x2="52" y2="154" stroke="#6B5344" stroke-width="2"/>
+          <line x1="52" y1="172" x2="52" y2="182" stroke="#6B5344" stroke-width="2"/>
+          <line x1="48" y1="168" x2="38" y2="168" stroke="#6B5344" stroke-width="2"/>
+          <line x1="56" y1="168" x2="66" y2="168" stroke="#6B5344" stroke-width="2"/>`
+      },
+      {
+        label: 'working with their hands on things that will outlast them',
+        bio: n => `These days ${n} works with their hands — building things they expect will outlast them.`,
+        svg: `<rect x="34" y="176" width="30" height="10" rx="2" fill="#7A5010" opacity=".85"/>
+          <rect x="40" y="166" width="30" height="10" rx="2" fill="#9A6820" opacity=".85"/>
+          <rect x="34" y="156" width="30" height="10" rx="2" fill="#7A5010" opacity=".85"/>`
+      },
+      {
+        label: 'teaching something they had to learn the hard way',
+        bio: n => `These days ${n} teaches — something they had to figure out the hard way, and they remember that.`,
+        svg: `<path d="M34,162 L34,182 Q48,177 57,182 L57,162 Q48,158 34,162Z" fill="rgba(107,83,68,.78)"/>
+          <path d="M57,162 L57,182 Q70,177 82,182 L82,162 Q70,158 57,162Z" fill="rgba(160,128,112,.78)"/>
+          <line x1="57" y1="162" x2="57" y2="182" stroke="#251A10" stroke-width="1.5"/>`
+      },
+    ]
+  },
+  {
+    layerId: 'carryLayer',
+    q: 'What are they still carrying?',
+    opts: [
+      {
+        label: 'a debt they can\'t quite pay back',
+        bio: n => `${n} is still carrying a debt that can't be paid back. Not money. Something else.`,
+        svg: `<ellipse cx="96" cy="156" rx="10" ry="6.5" fill="none" stroke="#B87D2A" stroke-width="2.5"/>
+          <ellipse cx="108" cy="162" rx="10" ry="6.5" fill="none" stroke="#B87D2A" stroke-width="2.5"/>`
+      },
+      {
+        label: 'a habit from someone who\'s gone',
+        bio: n => `There's a habit ${n} picked up from someone who's gone. They've never tried to break it.`,
+        svg: `<circle cx="86" cy="70" r="18" fill="none" stroke="rgba(37,26,16,.2)" stroke-width="1.5" stroke-dasharray="4,3"/>`
+      },
+      {
+        label: 'a language they\'re slowly losing',
+        bio: n => `${n} is carrying a language slowly going quiet. Some days they reach for a word and it's not there.`,
+        svg: `<text x="90" y="154" font-size="14" fill="#6B5344" opacity=".85" font-family="serif">α</text>
+          <text x="103" y="151" font-size="12" fill="#6B5344" opacity=".48" font-family="serif">字</text>
+          <text x="114" y="155" font-size="10" fill="#6B5344" opacity=".2" font-family="serif">ب</text>`
+      },
+      {
+        label: 'something they made once that they can\'t throw away',
+        bio: n => `There's something ${n} made a long time ago. Nothing special. They can't throw it away.`,
+        svg: `<polygon points="100,142 112,155 100,160 88,155" fill="#B87D2A" opacity=".7"/>
+          <line x1="100" y1="142" x2="100" y2="160" stroke="rgba(37,26,16,.22)" stroke-width="1"/>`
+      },
+      {
+        label: 'a question they keep not answering',
+        bio: n => `There's a question ${n} has been carrying for years. Not ready to answer it yet.`,
+        svg: `<text x="93" y="160" font-size="22" fill="#D94F2A" opacity=".7" font-family="serif" font-weight="bold">?</text>`
+      },
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let charName    = '';
+let charColor   = '#A08070';
+let choiceIdx   = [-1, -1, -1, -1, -1]; // name, place, shaped, work, carry
+let currentQ    = 0;
+
+const figureBodyEl   = document.getElementById('figureBody');
+const figureHeadEl   = document.getElementById('figureHead');
+const portraitNameEl = document.getElementById('portraitName');
+const bioLinesEl     = document.getElementById('bioLines');
+const bioFinalEl     = document.getElementById('bioFinal');
+const questionsEl    = document.getElementById('questionsArea');
+
+// ═══════════════════════════════════════════════
+// ENCODE / DECODE
+// ═══════════════════════════════════════════════
+function encodeChar() { return choiceIdx.join(''); }
+
+function decodeChar(str) {
+  if (!/^[0-4]{5}$/.test(str)) return null;
+  return str.split('').map(Number);
+}
+
+// ═══════════════════════════════════════════════
+// LOCALSTORAGE DECK
+// ═══════════════════════════════════════════════
+const DECK_KEY = 'relations_deck';
+
+function getDeck() {
+  try { return JSON.parse(localStorage.getItem(DECK_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveToDeck(code, name, snippets) {
+  const deck = getDeck();
+  if (deck.some(d => d.code === code)) return;
+  deck.unshift({ code, name, snippet: snippets[0] || '', ts: Date.now() });
+  localStorage.setItem(DECK_KEY, JSON.stringify(deck.slice(0, 20)));
+}
+
+function buildPortraitSvg(indices) {
+  const c = NAMES[indices[0]].color;
+  const place  = QUESTIONS[0].opts[indices[1]].svg;
+  const shaped = QUESTIONS[1].opts[indices[2]].svg;
+  const work   = QUESTIONS[2].opts[indices[3]].svg;
+  const carry  = QUESTIONS[3].opts[indices[4]].svg;
+  return `<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="200" height="240" fill="#D8CFC4" rx="10"/>
+    <g>${place}</g>
+    <ellipse cx="100" cy="228" rx="32" ry="6" fill="rgba(37,26,16,.12)"/>
+    <path d="M72,210 Q68,166 77,142 Q88,126 100,126 Q112,126 123,142 Q132,166 128,210 Q116,218 100,219 Q84,218 72,210Z" fill="${c}"/>
+    <circle cx="100" cy="96" r="30" fill="${c}"/>
+    <circle cx="91" cy="93" r="3.5" fill="white" opacity=".85"/>
+    <circle cx="109" cy="93" r="3.5" fill="white" opacity=".85"/>
+    <g>${shaped}</g><g>${work}</g><g>${carry}</g>
+  </svg>`;
+}
+
+function renderDeck() {
+  const deck = getDeck();
+  const section = document.getElementById('deckSection');
+  const row = document.getElementById('deckRow');
+  if (!deck.length) return;
+  section.classList.add('shown');
+  row.innerHTML = '';
+  deck.forEach(entry => {
+    const indices = decodeChar(entry.code);
+    if (!indices) return;
+    const card = document.createElement('div');
+    card.className = 'deck-card';
+    const portrait = document.createElement('div');
+    portrait.className = 'deck-portrait';
+    portrait.innerHTML = buildPortraitSvg(indices);
+    const name = document.createElement('p');
+    name.className = 'deck-name';
+    name.textContent = entry.name;
+    const snippet = document.createElement('p');
+    snippet.className = 'deck-snippet';
+    snippet.textContent = entry.snippet ? entry.snippet.slice(0, 60) + '…' : '';
+    card.appendChild(portrait);
+    card.appendChild(name);
+    card.appendChild(snippet);
+    row.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// SHARE
+// ═══════════════════════════════════════════════
+async function handleShare() {
+  const code = encodeChar();
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.searchParams.set('c', code);
+  const shareUrl = url.toString();
+  const note = document.getElementById('shareNote');
+
+  if (navigator.share) {
+    try { await navigator.share({ title: 'Nothing Means Anything Alone', url: shareUrl }); return; }
+    catch(e) { if (e.name === 'AbortError') return; }
+  }
+  navigator.clipboard.writeText(shareUrl)
+    .then(() => { note.textContent = 'Link copied.'; setTimeout(() => note.textContent = '', 3000); })
+    .catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = shareUrl; ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      note.textContent = 'Link copied.'; setTimeout(() => note.textContent = '', 3000);
+    });
+}
+
+function showShareButton() {
+  const wrap = document.getElementById('shareWrap');
+  const btn  = document.getElementById('shareBtn');
+  btn.textContent = `Share ${charName}`;
+  wrap.style.display = 'block';
+  requestAnimationFrame(() => setTimeout(() => wrap.classList.add('shown'), 40));
+}
+
+// ═══════════════════════════════════════════════
+// BUILD HELPERS
+// ═══════════════════════════════════════════════
+function addBioLine(text) {
+  const p = document.createElement('p');
+  p.className = 'bio-line';
+  p.textContent = text;
+  bioLinesEl.appendChild(p);
+  requestAnimationFrame(() => setTimeout(() => p.classList.add('shown'), 40));
+}
+
+function applyNameChoice(nameOpt, idx) {
+  charName  = nameOpt.label;
+  charColor = nameOpt.color;
+  choiceIdx[0] = idx;
+  figureBodyEl.setAttribute('fill', charColor);
+  figureHeadEl.setAttribute('fill', charColor);
+  portraitNameEl.textContent = nameOpt.label;
+  portraitNameEl.classList.add('shown');
+}
+
+function applyQuestionChoice(qi, opt, optIdx) {
+  choiceIdx[qi + 1] = optIdx;
+  const layer = document.getElementById(QUESTIONS[qi].layerId);
+  if (layer && opt.svg) layer.innerHTML = opt.svg;
+  addBioLine(opt.bio(charName));
+}
+
+function onBuildComplete() {
+  setTimeout(() => bioFinalEl.classList.add('shown'), 700);
+  setTimeout(() => {
+    showShareButton();
+    renderDeck();
+  }, 900);
+}
+
+// ═══════════════════════════════════════════════
+// INTERACTIVE BUILD
+// ═══════════════════════════════════════════════
+function showQuestion(i) {
+  if (i >= QUESTIONS.length) { onBuildComplete(); return; }
+  const data = QUESTIONS[i];
+  const block = document.createElement('div');
+  block.className = 'question-block';
+
+  const qtxt = document.createElement('p');
+  qtxt.className = 'question-text';
+  qtxt.textContent = data.q;
+  block.appendChild(qtxt);
+
+  const chipsWrap = document.createElement('div');
+  chipsWrap.className = 'q-chips';
+
+  data.opts.forEach((opt, oi) => {
+    const btn = document.createElement('button');
+    btn.className = 'q-chip';
+    btn.textContent = opt.label;
+    btn.addEventListener('click', () => {
+      chipsWrap.querySelectorAll('.q-chip').forEach(c => c.classList.add(c === btn ? 'chosen' : 'unchosen'));
+      applyQuestionChoice(i, opt, oi);
+      currentQ++;
+      setTimeout(() => { showQuestion(currentQ); }, 520);
+    });
+    chipsWrap.appendChild(btn);
+  });
+
+  block.appendChild(chipsWrap);
+  questionsEl.appendChild(block);
+  requestAnimationFrame(() => setTimeout(() => qtxt.classList.add('shown'), 40));
+}
+
+function startWithName() {
+  const block = document.createElement('div');
+  block.className = 'question-block';
+
+  const qtxt = document.createElement('p');
+  qtxt.className = 'question-text shown';
+  qtxt.textContent = 'Who are we building?';
+  block.appendChild(qtxt);
+
+  const chipsWrap = document.createElement('div');
+  chipsWrap.className = 'q-chips';
+
+  NAMES.forEach((n, ni) => {
+    const btn = document.createElement('button');
+    btn.className = 'q-chip';
+    btn.textContent = n.label;
+    btn.addEventListener('click', () => {
+      chipsWrap.querySelectorAll('.q-chip').forEach(c => c.classList.add(c === btn ? 'chosen' : 'unchosen'));
+      applyNameChoice(n, ni);
+      setTimeout(() => showQuestion(0), 500);
+    });
+    chipsWrap.appendChild(btn);
+  });
+
+  block.appendChild(chipsWrap);
+  questionsEl.appendChild(block);
+}
+
+// ═══════════════════════════════════════════════
+// AUTO-BUILD (from shared URL)
+// ═══════════════════════════════════════════════
+function autoBuildFromCode(indices) {
+  const nameOpt = NAMES[indices[0]];
+  applyNameChoice(nameOpt, indices[0]);
+
+  const snippets = [];
+  QUESTIONS.forEach((qData, qi) => {
+    const opt = qData.opts[indices[qi + 1]];
+    setTimeout(() => {
+      applyQuestionChoice(qi, opt, indices[qi + 1]);
+      snippets.push(opt.bio(nameOpt.label));
+    }, 400 + qi * 480);
+  });
+
+  const doneAt = 400 + QUESTIONS.length * 480 + 400;
+  setTimeout(() => {
+    bioFinalEl.classList.add('shown');
+    saveToDeck(indices.join(''), nameOpt.label, snippets.length ? snippets : [QUESTIONS[0].opts[indices[1]].bio(nameOpt.label)]);
+    const buildYours = document.getElementById('buildYours');
+    buildYours.classList.add('shown');
+    // Strip ?c= from the "build yours" link
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete('c');
+    document.getElementById('buildYoursBtn').href = cleanUrl.toString();
+    renderDeck();
+  }, doneAt);
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+const urlCode = new URLSearchParams(window.location.search).get('c');
+const urlIndices = urlCode ? decodeChar(urlCode) : null;
+
+if (urlIndices) {
+  document.getElementById('builderLabel').textContent = 'Someone built this for you.';
+  document.getElementById('builderIntro').textContent = '';
+  autoBuildFromCode(urlIndices);
+} else {
+  startWithName();
+  // Show deck if it already has entries (from previous visits)
+  if (getDeck().length) renderDeck();
+}
+</script>
+
+</body>
+</html>
