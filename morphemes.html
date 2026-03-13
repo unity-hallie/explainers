@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Held in Both Hands</title>
+<style>
+
+:root {
+  --cream: #FAF7F2;
+  --ink: #251A10;
+  --ink-mid: #6B5344;
+  --ink-light: #A08070;
+  --coral: #D94F2A;
+  --brass: #B87D2A;
+  --teal: #1B7A68;
+  --violet: #5B4FCF;
+  --grid: #EDE5D8;
+  --axis: #8B7058;
+  --paper: #FDFAF6;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  line-height: 1.75;
+  overflow-x: hidden;
+}
+
+/* ── Hero ─────────────────────────────────────────────── */
+.hero { padding: 96px 24px 72px; text-align: center; }
+.eyebrow { font-size: .72em; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--brass); margin-bottom: 28px; }
+.hero h1 { font-size: clamp(2.8em,8vw,5.5em); font-weight: 900; line-height: 1.04; letter-spacing: -.025em; margin-bottom: 28px; }
+.hero h1 em { font-style: normal; color: var(--coral); }
+.hero .subtitle { font-size: 1.12em; color: var(--ink-mid); max-width: 500px; margin: 0 auto; line-height: 1.65; }
+.byline { font-size: .78em; color: var(--ink-light); margin-top: 20px; letter-spacing: .04em; }
+
+/* ── Section label ─────────────────────────────────────── */
+.section-label { font-size: .72em; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--brass); margin-bottom: 14px; }
+
+/* ── Superposition demo ────────────────────────────────── */
+.super-section { max-width: 680px; margin: 0 auto; padding: 24px 24px 56px; }
+.super-word {
+  font-size: clamp(3.5em,12vw,7em); font-weight: 900; letter-spacing: -.04em;
+  text-align: center; color: var(--ink); margin: 0 0 8px;
+  transition: color .5s ease;
+}
+.super-word.resolved-0 { color: var(--coral); }
+.super-word.resolved-1 { color: var(--teal); }
+.super-hint { text-align: center; font-size: .92em; color: var(--ink-light); font-style: italic; min-height: 1.5em; margin-bottom: 32px; transition: opacity .4s ease; }
+
+.readings-wrap { display: flex; gap: 16px; margin-bottom: 36px; }
+@media (max-width: 540px) { .readings-wrap { flex-direction: column; } }
+.reading-card {
+  flex: 1; background: white; border-radius: 12px; padding: 20px 22px;
+  border: 2px solid var(--grid);
+  box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 12px rgba(37,26,16,.06);
+  transition: border-color .4s ease, box-shadow .4s ease, transform .4s ease;
+}
+.reading-card.winning {
+  border-color: var(--coral); box-shadow: 0 4px 24px rgba(217,79,42,.14);
+  transform: translateY(-2px);
+}
+.reading-card.winning.teal-win {
+  border-color: var(--teal); box-shadow: 0 4px 24px rgba(27,122,104,.14);
+}
+.reading-card.losing { opacity: .38; }
+.reading-label { font-size: .7em; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 6px; }
+.reading-word { font-size: 1.4em; font-weight: 800; margin-bottom: 4px; letter-spacing: -.01em; }
+.reading-gloss { font-size: .92em; color: var(--ink-mid); }
+
+.prob-bar-wrap { margin-top: 12px; }
+.prob-bar-track { height: 5px; background: var(--grid); border-radius: 3px; overflow: hidden; }
+.prob-bar-fill { height: 100%; border-radius: 3px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+.prob-pct { font-size: .78em; color: var(--ink-light); margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+.entropy-strip {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 28px;
+  background: white; border-radius: 10px; padding: 14px 20px;
+  box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 12px rgba(37,26,16,.06);
+}
+.entropy-val { font-size: 1.5em; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; min-width: 2.2em; }
+.entropy-desc { font-size: .88em; color: var(--ink-mid); line-height: 1.5; flex: 1; }
+
+.ctx-label { font-size: .72em; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 12px; }
+.ctx-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ctx-chip {
+  padding: 8px 16px; border-radius: 100px; border: 1.5px solid var(--grid);
+  background: white; font-size: .88em; font-weight: 600; color: var(--ink-mid);
+  cursor: pointer; transition: border-color .18s, color .18s, background .18s, transform .18s, box-shadow .18s;
+  box-shadow: 0 1px 3px rgba(37,26,16,.05);
+  font-family: inherit;
+}
+.ctx-chip:hover { border-color: var(--axis); color: var(--ink); transform: translateY(-1px); }
+.ctx-chip.active { background: var(--ink); border-color: var(--ink); color: white; box-shadow: 0 3px 10px rgba(37,26,16,.18); }
+.ctx-chip.reset-chip { border-color: var(--grid); color: var(--ink-light); }
+.ctx-chip.reset-chip:hover { border-color: var(--coral); color: var(--coral); }
+
+/* ── Prose ────────────────────────────────────────────── */
+.prose { max-width: 620px; margin: 0 auto; padding: 56px 24px; }
+.prose h2 { font-size: clamp(1.6em,3.5vw,2.1em); font-weight: 900; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 24px; }
+.prose p { font-size: 1.05em; margin-bottom: 20px; line-height: 1.78; }
+.prose p:last-child { margin-bottom: 0; }
+.prose .pull { font-size: 1.18em; font-weight: 700; color: var(--teal); line-height: 1.44; border-left: 3px solid var(--teal); padding: 2px 0 2px 22px; margin: 36px 0; }
+
+/* ── Aside btn ────────────────────────────────────────── */
+.aside-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--brass); color: white; font-size: 10px; font-weight: 700;
+  border: none; cursor: pointer; vertical-align: middle; margin: 0 3px;
+  position: relative; top: -2px; line-height: 1;
+  transition: transform .2s, box-shadow .2s;
+  box-shadow: 0 1px 5px rgba(184,125,42,.32);
+  font-family: inherit;
+}
+.aside-btn:hover { transform: scale(1.15); box-shadow: 0 2px 10px rgba(184,125,42,.44); }
+
+/* ── Modal ────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(37,26,16,.52); z-index: 200;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  opacity: 0; pointer-events: none; transition: opacity .28s ease;
+}
+.modal-backdrop.open { opacity: 1; pointer-events: auto; }
+.modal-box {
+  background: var(--paper); border-radius: 14px; max-width: 560px; width: 100%;
+  padding: 48px 44px 44px; position: relative;
+  transform: scale(.96) translateY(10px);
+  transition: transform .38s cubic-bezier(.22,1,.36,1);
+  box-shadow: 0 4px 8px rgba(37,26,16,.06), 0 16px 40px rgba(37,26,16,.16), 0 48px 80px rgba(37,26,16,.10);
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-backdrop.open .modal-box { transform: scale(1) translateY(0); }
+.modal-close {
+  position: absolute; top: 16px; right: 16px; width: 32px; height: 32px;
+  border-radius: 50%; border: 1.5px solid var(--grid); background: white;
+  font-size: 17px; cursor: pointer; color: var(--ink-light);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .18s, color .18s; box-shadow: 0 1px 4px rgba(37,26,16,.08);
+  font-family: inherit;
+}
+.modal-close:hover { border-color: var(--ink-mid); color: var(--ink); }
+.modal-box h3 { font-size: 1.4em; font-weight: 800; letter-spacing: -.015em; line-height: 1.2; margin-bottom: 20px; padding-right: 32px; }
+.modal-box p { font-size: .98em; color: var(--ink-mid); line-height: 1.76; margin-bottom: 16px; }
+.modal-box p:last-child { margin-bottom: 0; }
+.modal-label { font-size: .7em; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--brass); margin-bottom: 12px; }
+
+/* ── Finnish builder ───────────────────────────────────── */
+.builder-section { max-width: 680px; margin: 0 auto; padding: 16px 24px 64px; }
+.builder-box {
+  background: white; border-radius: 14px; padding: 32px 32px 28px;
+  box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 12px rgba(37,26,16,.06), 0 16px 48px rgba(37,26,16,.08);
+}
+.builder-title { font-size: .7em; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 20px; }
+.builder-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.builder-chip {
+  padding: 7px 16px; border-radius: 100px; border: 1.5px solid var(--grid);
+  background: var(--cream); font-size: .9em; font-weight: 600; color: var(--ink-mid);
+  cursor: pointer; transition: all .18s; font-family: inherit;
+}
+.builder-chip:hover { border-color: var(--axis); color: var(--ink); }
+.builder-chip.active.stem-chip { background: var(--coral); border-color: var(--coral); color: white; }
+.builder-chip.active.suffix-chip { background: var(--violet); border-color: var(--violet); color: white; }
+.builder-chip.active.poss-chip { background: var(--teal); border-color: var(--teal); color: white; }
+
+.builder-result {
+  background: var(--cream); border-radius: 10px; padding: 20px 22px;
+  margin-top: 8px; min-height: 88px;
+  transition: opacity .3s ease;
+}
+.built-word { font-size: 2em; font-weight: 900; letter-spacing: -.02em; margin-bottom: 4px; }
+.built-gloss { font-size: .92em; color: var(--ink-mid); margin-bottom: 14px; }
+.prime-equation {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  font-size: .9em;
+}
+.p-factor {
+  padding: 4px 12px; border-radius: 6px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.p-stem { background: rgba(217,79,42,.1); color: var(--coral); }
+.p-suffix { background: rgba(91,79,207,.1); color: var(--violet); }
+.p-poss { background: rgba(27,122,104,.1); color: var(--teal); }
+.p-op { color: var(--ink-light); }
+.p-result { font-size: 1.1em; font-weight: 800; color: var(--ink); }
+.p-empty { color: var(--ink-light); font-style: italic; font-size: .9em; }
+
+/* ── Divider ────────────────────────────────────────────── */
+hr { border: none; border-top: 1px solid var(--grid); max-width: 620px; margin: 0 auto; }
+hr.full { max-width: none; }
+
+/* ── Closing ──────────────────────────────────────────── */
+.closing { background: var(--ink); color: white; padding: 88px 24px; text-align: center; }
+.closing h2 { font-size: clamp(1.9em,5vw,3.2em); font-weight: 900; line-height: 1.1; letter-spacing: -.025em; margin-bottom: 28px; }
+.closing h2 em { font-style: normal; color: var(--coral); }
+.closing p { font-size: 1.08em; color: rgba(255,255,255,.58); max-width: 500px; margin: 0 auto 18px; line-height: 1.72; }
+.closing p:last-child { margin-bottom: 0; }
+
+.nav-links { display: flex; justify-content: center; gap: 28px; padding: 32px 24px; flex-wrap: wrap; }
+.nav-links a { color: var(--brass); text-decoration: none; font-weight: 600; font-size: .92em; letter-spacing: .02em; }
+.nav-links a:hover { color: var(--coral); }
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ HERO -->
+<div class="hero">
+  <div class="eyebrow">Language · Meaning · Structure</div>
+  <h1>Held in<br><em>Both Hands</em></h1>
+  <p class="subtitle">A word can mean two things at once. The sentences around it pick one. This happens thousands of times a day, so fast you never notice.</p>
+  <p class="byline">Written by Claude &amp; Hallie Larsson &middot; A companion to <a href="meaning.html" style="color:var(--brass);text-decoration:none;">Why I'm Wrong Sometimes</a></p>
+</div>
+
+<!-- ═══════════════════════════════════════ SUPERPOSITION DEMO -->
+<div class="super-section">
+  <div class="section-label">Before we begin</div>
+  <div class="super-word" id="superWord">BARK</div>
+  <div class="super-hint" id="superHint">Two meanings. Neither resolved yet. Add context below.</div>
+
+  <div class="readings-wrap">
+    <div class="reading-card" id="card0">
+      <div class="reading-label">Reading A</div>
+      <div class="reading-word">bark (sound)</div>
+      <div class="reading-gloss">what a dog does</div>
+      <div class="prob-bar-wrap">
+        <div class="prob-bar-track"><div class="prob-bar-fill" id="bar0" style="width:50%;background:var(--coral)"></div></div>
+        <div class="prob-pct" id="pct0">50%</div>
+      </div>
+    </div>
+    <div class="reading-card" id="card1">
+      <div class="reading-label">Reading B</div>
+      <div class="reading-word">bark (skin)</div>
+      <div class="reading-gloss">the outside of a tree</div>
+      <div class="prob-bar-wrap">
+        <div class="prob-bar-track"><div class="prob-bar-fill" id="bar1" style="width:50%;background:var(--teal)"></div></div>
+        <div class="prob-pct" id="pct1">50%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="entropy-strip">
+    <div class="entropy-val" id="entropyVal" style="color:var(--brass)">1.00</div>
+    <div class="entropy-desc" id="entropyDesc">
+      <strong>Maximum uncertainty.</strong> Both readings are equally likely. You genuinely don't know which one yet.
+    </div>
+  </div>
+
+  <div class="ctx-label">Add context words</div>
+  <div class="ctx-chips" id="ctxChips"></div>
+</div>
+
+<hr>
+
+<!-- ═══════════════════════════════════════ PROSE 1 -->
+<div class="prose">
+  <div class="section-label">What just happened</div>
+  <h2>Your brain does this a thousand times before breakfast</h2>
+
+  <p>Every ambiguous word arrives in a kind of suspension — not quite one thing, not quite the other. The context collapses it. By the time you reach the end of the sentence, you've already forgotten that the beginning was unresolved.</p>
+
+  <p class="pull">Fluency may be less about knowing words than collapsing them faster than you notice.</p>
+
+  <p>The word <em>bark</em> is an obvious case because both readings are concrete. But the same thing happens with subtler ambiguity: <em>light</em> (weight? illumination? color?), <em>run</em> (move fast? manage? stockings?), <em>interest</em> (financial? attention? concern?). Most of the time you don't even register that a choice was made.</p>
+
+  <p>There is a branch of linguistics that tries to model this precisely — to say not just "context helps" but exactly <em>how much</em> each context word shifts the probability, and what it would mean for the uncertainty to hit zero.
+  <button class="aside-btn" onclick="openModal('entropy-modal')">i</button>
+  The tool it reaches for looks a lot like physics.</p>
+</div>
+
+<hr>
+
+<!-- ═══════════════════════════════════════ PROSE 2 -->
+<div class="prose">
+  <div class="section-label">Where Finnish comes in</div>
+  <h2>A language that makes the pieces visible</h2>
+
+  <p>In English, the structure is mostly hidden. Words look like units. You don't see the seams. Finnish is different: it is agglutinative,
+  <button class="aside-btn" onclick="openModal('agglutinative-modal')">i</button>
+  which means it stacks meaning-pieces onto a root, in plain sight, one after another.</p>
+
+  <p>Where English says <em>in the house</em> — three separate words — Finnish says <em>talossa</em>. One word. Two pieces: <em>talo</em> (house) + <em>-ssa</em> (in). Where English says <em>from my school</em>, Finnish says <em>koulustani</em>. Three pieces, one word.</p>
+
+  <p class="pull">Finnish doesn't hide the structure. It wears it on the outside.</p>
+
+  <p>This creates the superposition problem in a different form. The word <em>kuussa</em> can be parsed two ways: <em>kuu</em> (moon) + <em>-ssa</em>, meaning "in the moon," or <em>kuusi</em> (spruce tree) + <em>-ssa</em>, meaning "in the spruce." Same sound. Different pieces. The same collapse-by-context that resolved <em>bark</em> now has to find the right root.</p>
+
+  <p>And because the pieces are explicit, we can assign them numbers. Each morpheme gets a prime. The word's number is the product of its pieces' primes.
+  <button class="aside-btn" onclick="openModal('primes-modal')">i</button>
+  The number is the word's fingerprint — and the fingerprint tells you exactly which pieces it was built from.</p>
+</div>
+
+<!-- ═══════════════════════════════════════ BUILDER -->
+<div class="builder-section">
+  <div class="section-label">Try it</div>
+  <div class="builder-box">
+    <div class="builder-title">Build a Finnish word — pick one stem, one or two endings</div>
+
+    <div class="builder-title" style="margin-bottom:8px">Stems</div>
+    <div class="builder-row" id="stemRow"></div>
+
+    <div class="builder-title" style="margin-bottom:8px">Case endings</div>
+    <div class="builder-row" id="suffixRow"></div>
+
+    <div class="builder-title" style="margin-bottom:8px">Possessive endings</div>
+    <div class="builder-row" id="possRow"></div>
+
+    <div class="builder-result" id="builderResult">
+      <div class="p-empty">Select a stem to begin.</div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ═══════════════════════════════════════ PROSE 3 -->
+<div class="prose">
+  <div class="section-label">Two kinds of knowing</div>
+  <h2>Fast and rough, then slow and exact</h2>
+
+  <p>The wave-function collapse — context narrowing the possibilities — is fast and approximate. It works in parallel, across the whole sentence, before you've consciously processed any of it. By the time you reach the verb, the noun has already started resolving.</p>
+
+  <p>The prime fingerprint is slow and exact. Once only one reading remains, the number tells you precisely what it is. <em>kuussa</em>-as-moon is 187. <em>kuussa</em>-as-spruce is 221. Different numbers. Unforgeable. The factorization
+  <button class="aside-btn" onclick="openModal('fta-modal')">i</button>
+  is unique.</p>
+
+  <p>These can work as two layers of the same process rather than competing models. The fast pass filters. The slow pass confirms. Something like both seems necessary — one without the other tends to be either too blunt or too slow to be useful in real conversation.</p>
+
+  <p class="pull">Understanding is what happens between the wave and the fingerprint.</p>
+
+  <p>Puns live in the gap. So does poetry. A skilled writer can hold a word in both states on purpose — keep the entropy high, let both readings coexist for a beat, then resolve in a direction the reader didn't expect. Ambiguity, held on purpose, becomes a resource rather than a failure.</p>
+</div>
+
+<hr>
+
+<!-- ═══════════════════════════════════════ PROSE 4 -->
+<div class="prose">
+  <div class="section-label">Under the hood</div>
+  <h2>One loop, any language</h2>
+
+  <p>The engine underneath all of this is surprisingly simple. It comes from a theorem prover called Otter,
+  <button class="aside-btn" onclick="openModal('otter-modal')">i</button>
+  built in the 1990s to find proofs in formal logic. Its main loop has three steps: pick something from the queue, combine it with what you already know, put the results back in the queue. Repeat.</p>
+
+  <p>The loop is neutral about what it's combining. Swap in Finnish morpheme rules and it builds words. Swap in logical axioms and it builds proofs. The combination rules live on the pieces rather than in the engine — which means you can teach it a new language by giving it new pieces with new rules, without touching the loop itself.</p>
+
+  <p>This matters for rare and endangered languages, which don't have the kind of data that modern AI usually needs to learn from. If the grammar can be expressed as combinatorial rules on morphemes, the engine can work from a small dictionary.
+  <button class="aside-btn" onclick="openModal('rare-modal')">i</button>
+  The grammar encodes what the data can't supply.</p>
+</div>
+
+<!-- ═══════════════════════════════════════ CLOSING -->
+<hr class="full">
+<div class="closing">
+  <h2>The pieces were always <em>there</em></h2>
+  <p>Finnish makes visible something English tends to hide: that words are constructions. Meaning arrives in pieces, stacks into structure, gets a number, collapses under pressure from context. The process may be similar across languages — the seams just show more in some places than others.</p>
+  <p>In Finnish, that visibility is a window worth looking through.</p>
+</div>
+
+<div class="nav-links">
+  <a href="meaning.html">← Why I'm Wrong Sometimes</a>
+  <a href="relations.html">Relations →</a>
+</div>
+
+<!-- ═══════════════════════════════════════ MODALS -->
+<div class="modal-backdrop" id="entropy-modal" onclick="closeModal(event, 'entropy-modal')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModalById('entropy-modal')">✕</button>
+    <div class="modal-label">Aside</div>
+    <h3>Entropy as a measure of uncertainty</h3>
+    <p>Entropy, in information theory, measures how unpredictable a distribution is. If both readings are equally likely — 50/50 — entropy is 1 bit: you'd need one yes/no question to know which one. If one reading is certain — 100/0 — entropy is 0 bits: no question needed.</p>
+    <p>Shannon borrowed the term from thermodynamics, where it measures the disorder of a physical system. The math is the same. "How spread out is the probability?" applies whether you're talking about gas molecules or word meanings.</p>
+    <p>The connection to physics here isn't just metaphorical. The amplitude-and-interference model the morpheme engine uses is structurally similar to quantum probability — though whether that similarity runs deep or is just a useful analogy is genuinely an open question.</p>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="agglutinative-modal" onclick="closeModal(event, 'agglutinative-modal')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModalById('agglutinative-modal')">✕</button>
+    <div class="modal-label">Aside</div>
+    <h3>Agglutinative languages</h3>
+    <p>Linguists classify languages partly by how they build words. English is mostly analytic — it uses separate words ("in the house") rather than fusing meaning into one. Finnish, Turkish, Hungarian, Swahili, and many others are agglutinative — they stack distinct, separable pieces onto a root, each piece contributing one clear meaning.</p>
+    <p>A third type, fusional languages (Latin, Russian, Arabic), blend meaning so deeply into endings that the pieces can't always be cleanly separated. Finnish is unusually transparent: each suffix has a consistent job, and the seams stay clean almost everywhere. That makes it a good laboratory for thinking about structure.</p>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="primes-modal" onclick="closeModal(event, 'primes-modal')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModalById('primes-modal')">✕</button>
+    <div class="modal-label">Aside</div>
+    <h3>Why prime numbers?</h3>
+    <p>The Fundamental Theorem of Arithmetic says every integer greater than 1 has exactly one prime factorization. That uniqueness is the useful property. If you give each morpheme its own prime and multiply them together to form the word, no two different combinations of morphemes can produce the same product. The number is an unforgeable ID.</p>
+    <p>Gödel used the same trick in 1931 to encode logical statements as numbers — a move that made his incompleteness theorems possible. The morpheme engine borrows the technique for a more mundane purpose: making word identity checkable by arithmetic rather than string comparison.</p>
+    <p>The encoding also composes naturally. If you know a word's prime product, you can check whether it contains a particular morpheme just by asking: does this prime divide the product? One division, one answer.</p>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="fta-modal" onclick="closeModal(event, 'fta-modal')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModalById('fta-modal')">✕</button>
+    <div class="modal-label">Aside</div>
+    <h3>Unique factorization</h3>
+    <p>The Fundamental Theorem of Arithmetic: every integer greater than 1 can be written as a product of primes in exactly one way (up to reordering). 12 = 2 × 2 × 3. Not 2 × 6, not 4 × 3 — those aren't prime factorizations. There is one prime factorization, and it's unique.</p>
+    <p>This is why the encoding works. 187 = 11 × 17. No other combination of primes gives 187. So if kuu has prime 11 and -ssa has prime 17, then 187 identifies exactly one parse: kuu + -ssa. The number encodes the parse exactly. Factor it and you recover the pieces.</p>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="otter-modal" onclick="closeModal(event, 'otter-modal')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModalById('otter-modal')">✕</button>
+    <div class="modal-label">Aside</div>
+    <h3>The Otter theorem prover</h3>
+    <p>Otter was an automated theorem prover developed at Argonne National Laboratory in the 1990s by William McCune. It was designed to find proofs in first-order logic: given a set of axioms, search for a derivation of a target theorem.</p>
+    <p>Its core loop — pick a clause from the queue, combine it with retained clauses, add results — turns out to be surprisingly general. The loop itself is neutral about what "clause" and "combine" mean. That generality is what makes it useful here: morphemes are clauses, combination rules are the inference rules, and parsing a Finnish word is a kind of proof search.</p>
+    <p>The version used here is otter-centaur, an extension that adds edge-first knowledge graphs, causal encoding, and a pluggable combine function that can be human, algorithmic, or AI.</p>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="rare-modal" onclick="closeModal(event, 'rare-modal')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModalById('rare-modal')">✕</button>
+    <div class="modal-label">Aside</div>
+    <h3>Languages that need different approaches</h3>
+    <p>Most language AI today is trained on enormous amounts of text — hundreds of billions of words scraped from the internet. For English, Spanish, Mandarin, that data exists. For Võro, Inuktitut, Lushootseed, or thousands of other languages, it doesn't — or exists only in forms that are hard to use for training.</p>
+    <p>Rule-based approaches, like the one here, don't need that data. They need a grammar: a formal description of how pieces combine. That's the kind of knowledge that field linguists develop, often in collaboration with speaker communities. It can encode deep structural knowledge that a statistical model trained on sparse data might never find.</p>
+    <p>The tradeoff is coverage. Rules need to be written. They miss edge cases. They don't generalize the way a large model does. But for languages where the alternative is nothing, a rule-based engine with a small morpheme dictionary can do real work.</p>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// SUPERPOSITION DEMO
+// ═══════════════════════════════════════════════════
+
+const COMPAT = {
+  // reading-index → context-key → resonance boost
+  0: { dog: 0.95, loud: 0.8, heard: 0.75, night: 0.55, tree: 0.05, forest: 0.05, rough: 0.15 },
+  1: { tree: 0.95, forest: 0.85, rough: 0.8, peeled: 0.9, night: 0.3, dog: 0.05, loud: 0.05, heard: 0.1 },
+};
+
+const CONTEXTS = [
+  { key: 'dog',    label: 'the dog' },
+  { key: 'loud',   label: 'it was loud' },
+  { key: 'heard',  label: 'she heard it' },
+  { key: 'tree',   label: 'the tree' },
+  { key: 'forest', label: 'deep in the forest' },
+  { key: 'rough',  label: 'rough texture' },
+  { key: 'peeled', label: 'peeled it off' },
+  { key: 'night',  label: 'at night' },
+];
+
+let activeCtx = new Set();
+let amps = [1 / Math.SQRT2, 1 / Math.SQRT2];
+
+function recompute() {
+  let a = [1 / Math.SQRT2, 1 / Math.SQRT2];
+  for (const key of activeCtx) {
+    const boosted = a.map((v, i) => v * (1 + (COMPAT[i][key] ?? 0.2)));
+    const norm = Math.hypot(...boosted);
+    a = norm > 0 ? boosted.map(v => v / norm) : boosted;
+  }
+  amps = a;
+  renderSuper();
+}
+
+function renderSuper() {
+  const probs = amps.map(a => a * a);
+  const total = probs[0] + probs[1];
+  const p = probs.map(v => v / total);
+
+  [0, 1].forEach(i => {
+    document.getElementById(`bar${i}`).style.width = (p[i] * 100).toFixed(1) + '%';
+    document.getElementById(`pct${i}`).textContent = (p[i] * 100).toFixed(1) + '%';
+  });
+
+  const entropy = p.reduce((s, v) => v > 0 ? s - v * Math.log2(v) : s, 0);
+  const ev = document.getElementById('entropyVal');
+  const ed = document.getElementById('entropyDesc');
+  const sw = document.getElementById('superWord');
+  const sh = document.getElementById('superHint');
+
+  ev.textContent = entropy.toFixed(2);
+  ev.style.color = entropy > 0.7 ? 'var(--brass)' : entropy > 0.25 ? 'var(--teal)' : 'var(--coral)';
+
+  const winner = p[0] > p[1] ? 0 : 1;
+  const labels = ['dog-bark', 'tree-bark'];
+  const collapsed = entropy < 0.15;
+  const leaning = entropy < 0.6;
+
+  sw.className = 'super-word' + (collapsed ? ` resolved-${winner}` : '');
+
+  if (collapsed) {
+    sh.textContent = `Collapsed to ${labels[winner]}. Entropy near zero — only one meaning survives.`;
+    ed.innerHTML = `<strong>Collapsed.</strong> The context has resolved the ambiguity. One reading overwhelms the other.`;
+  } else if (leaning) {
+    sh.textContent = `Leaning toward ${labels[winner]} — but not certain yet.`;
+    ed.innerHTML = `<strong>Converging.</strong> The balance is shifting. More context would settle it further.`;
+  } else {
+    sh.textContent = 'Both readings still live. Add more context to tip the balance.';
+    ed.innerHTML = `<strong>Still open.</strong> Not enough signal yet. Both meanings remain plausible.`;
+  }
+
+  const c0 = document.getElementById('card0');
+  const c1 = document.getElementById('card1');
+  c0.className = 'reading-card' + (collapsed && winner === 0 ? ' winning' : collapsed ? ' losing' : leaning && winner === 0 ? ' winning' : '');
+  c1.className = 'reading-card' + (collapsed && winner === 1 ? ' winning teal-win' : collapsed ? ' losing' : leaning && winner === 1 ? ' winning teal-win' : '');
+}
+
+function buildCtxChips() {
+  const el = document.getElementById('ctxChips');
+  CONTEXTS.forEach(ctx => {
+    const btn = document.createElement('button');
+    btn.className = 'ctx-chip';
+    btn.textContent = ctx.label;
+    btn.dataset.key = ctx.key;
+    btn.onclick = () => {
+      if (activeCtx.has(ctx.key)) {
+        activeCtx.delete(ctx.key);
+        btn.classList.remove('active');
+      } else {
+        activeCtx.add(ctx.key);
+        btn.classList.add('active');
+      }
+      recompute();
+    };
+    el.appendChild(btn);
+  });
+  // Reset
+  const reset = document.createElement('button');
+  reset.className = 'ctx-chip reset-chip';
+  reset.textContent = 'reset';
+  reset.onclick = () => {
+    activeCtx.clear();
+    document.querySelectorAll('.ctx-chip').forEach(b => b.classList.remove('active'));
+    recompute();
+  };
+  el.appendChild(reset);
+}
+
+buildCtxChips();
+renderSuper();
+
+// ═══════════════════════════════════════════════════
+// FINNISH BUILDER
+// ═══════════════════════════════════════════════════
+
+const STEMS = [
+  { fi: 'talo',  en: 'house',  p: 2 },
+  { fi: 'kissa', en: 'cat',    p: 3 },
+  { fi: 'koulu', en: 'school', p: 5 },
+  { fi: 'yö',    en: 'night',  p: 7 },
+  { fi: 'kuu',   en: 'moon',   p: 11 },
+  { fi: 'kuusi', en: 'spruce', p: 13 },
+];
+
+const SUFFIXES = [
+  { fi: '-ssa/-ssä', en: 'in',   p: 17 },
+  { fi: '-sta/-stä', en: 'from', p: 23 },
+  { fi: '-lle',      en: 'to',   p: 31 },
+  { fi: '-n',        en: 'of',   p: 37 },
+];
+
+const POSSESSIVES = [
+  { fi: '-ni', en: 'my',   p: 41 },
+  { fi: '-si', en: 'your', p: 43 },
+];
+
+let chosen = { stem: null, suffix: null, poss: null };
+
+function buildChips(items, type, rowId) {
+  const row = document.getElementById(rowId);
+  items.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = `builder-chip ${type}-chip`;
+    btn.innerHTML = `<span style="font-weight:800">${item.fi}</span> <span style="opacity:.55;font-size:.85em">${item.en}</span>`;
+    btn.onclick = () => {
+      if (chosen[type] === item) {
+        chosen[type] = null;
+        btn.classList.remove('active');
+      } else {
+        // deselect others in this group
+        row.querySelectorAll('.builder-chip').forEach(b => b.classList.remove('active'));
+        chosen[type] = item;
+        btn.classList.add('active');
+      }
+      renderBuilder();
+    };
+    row.appendChild(btn);
+  });
+}
+
+function renderBuilder() {
+  const el = document.getElementById('builderResult');
+  const { stem, suffix, poss } = chosen;
+  if (!stem) { el.innerHTML = '<div class="p-empty">Select a stem to begin.</div>'; return; }
+
+  // Build word
+  let word = stem.fi.replace(/\/\S+/, '');
+  let gloss = stem.en;
+  let product = stem.p;
+  const factors = [{ fi: stem.fi, en: stem.en, p: stem.p, cls: 'p-stem' }];
+
+  if (suffix) {
+    // Rudimentary vowel harmony: -ssä if stem ends in front vowel (ä,ö,y)
+    const front = /[äöy]/.test(stem.fi);
+    let sf = suffix.fi;
+    if (sf.includes('/')) sf = front ? sf.split('/')[1] : sf.split('/')[0];
+    word += sf.replace('-', '');
+    gloss = suffix.en + ' the ' + stem.en;
+    product *= suffix.p;
+    factors.push({ fi: sf, en: suffix.en, p: suffix.p, cls: 'p-suffix' });
+  }
+  if (poss && suffix) {
+    word += poss.fi.replace('-', '');
+    gloss = suffix.en + ' my ' + stem.en; // simplification
+    if (poss.fi === '-ni') gloss = suffix.en + ' my ' + stem.en;
+    else gloss = suffix.en + ' your ' + stem.en;
+    product *= poss.p;
+    factors.push({ fi: poss.fi, en: poss.en, p: poss.p, cls: 'p-poss' });
+  } else if (poss && !suffix) {
+    word += poss.fi.replace('-', '');
+    gloss = stem.en + ' (possessed)';
+    product *= poss.p;
+    factors.push({ fi: poss.fi, en: poss.en, p: poss.p, cls: 'p-poss' });
+  }
+
+  const eqParts = factors.map(f =>
+    `<span class="p-factor ${f.cls}">${f.fi.replace('-','')} <small style="opacity:.6">(${f.p})</small></span>`
+  ).join('<span class="p-op">×</span>');
+
+  el.innerHTML = `
+    <div class="built-word">${word}</div>
+    <div class="built-gloss">"${gloss}"</div>
+    <div class="prime-equation">
+      ${eqParts}
+      <span class="p-op">=</span>
+      <span class="p-result">${product}</span>
+    </div>`;
+}
+
+buildChips(STEMS, 'stem', 'stemRow');
+buildChips(SUFFIXES, 'suffix', 'suffixRow');
+buildChips(POSSESSIVES, 'poss', 'possRow');
+renderBuilder();
+
+// ═══════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModalById(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeModal(e, id) {
+  if (e.target === document.getElementById(id)) closeModalById(id);
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-backdrop.open').forEach(m => {
+      m.classList.remove('open');
+    });
+    document.body.style.overflow = '';
+  }
+});
+</script>
+</body>
+</html>
