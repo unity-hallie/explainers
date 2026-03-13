@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Water, Not the Fish</title>
+<style>
+
+:root {
+  --cream: #FAF7F2;
+  --ink: #251A10;
+  --ink-mid: #6B5344;
+  --ink-light: #A08070;
+  --coral: #D94F2A;
+  --brass: #B87D2A;
+  --teal: #1B7A68;
+  --grid: #EDE5D8;
+  --axis: #8B7058;
+  --paper: #FDFAF6;
+  --chinese: #C94030;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  line-height: 1.75;
+  overflow-x: hidden;
+}
+
+/* ── Hero ─────────────────────────────────────────────── */
+.hero { padding: 96px 24px 72px; text-align: center; }
+.eyebrow { font-size: .72em; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--brass); margin-bottom: 28px; }
+.hero h1 { font-size: clamp(2.8em,8vw,5.5em); font-weight: 900; line-height: 1.04; letter-spacing: -.025em; margin-bottom: 28px; }
+.hero h1 em { font-style: normal; color: var(--coral); }
+.hero .subtitle { font-size: 1.12em; color: var(--ink-mid); max-width: 520px; margin: 0 auto; line-height: 1.65; }
+.byline { font-size: .78em; color: var(--ink-light); margin-top: 20px; letter-spacing: .04em; }
+
+/* ── Section label ────────────────────────────────────── */
+.section-label { font-size: .72em; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--brass); margin-bottom: 14px; }
+
+/* ── Prose ────────────────────────────────────────────── */
+.prose { max-width: 620px; margin: 0 auto; padding: 56px 24px; }
+.prose h2 { font-size: clamp(1.6em,3.5vw,2.1em); font-weight: 900; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 24px; }
+.prose p { font-size: 1.05em; margin-bottom: 20px; line-height: 1.78; }
+.prose p:last-child { margin-bottom: 0; }
+.prose .pull { font-size: 1.18em; font-weight: 700; color: var(--teal); line-height: 1.44; border-left: 3px solid var(--teal); padding: 2px 0 2px 22px; margin: 36px 0; }
+
+hr { border: none; border-top: 1px solid var(--grid); max-width: 620px; margin: 0 auto; }
+hr.full { max-width: none; }
+
+/* ── Aside btn ────────────────────────────────────────── */
+.aside-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--brass); color: white; font-size: 10px; font-weight: 700;
+  border: none; cursor: pointer; vertical-align: middle; margin: 0 3px;
+  position: relative; top: -2px; line-height: 1;
+  transition: transform .2s, box-shadow .2s;
+  box-shadow: 0 1px 5px rgba(184,125,42,.32);
+}
+.aside-btn:hover { transform: scale(1.15); box-shadow: 0 2px 10px rgba(184,125,42,.44); }
+
+/* ── Source btn ───────────────────────────────────────── */
+.src-btn {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: .72em; font-weight: 700; letter-spacing: .04em;
+  color: var(--teal); border: 1px solid currentColor;
+  border-radius: 4px; padding: 1px 6px;
+  background: none; cursor: pointer; vertical-align: middle;
+  margin: 0 2px; position: relative; top: -1px;
+  text-decoration: none; font-family: 'SF Mono', 'Fira Mono', monospace;
+  transition: background .15s, color .15s;
+}
+.src-btn:hover { background: var(--teal); color: white; }
+
+/* ── Modal source footer ──────────────────────────────── */
+.modal-source {
+  margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--grid);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.modal-source-label { font-size: .68em; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--brass); }
+.modal-source a {
+  font-size: .84em; color: var(--teal); text-decoration: none;
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.modal-source a:hover { text-decoration: underline; }
+
+/* ── Sources section ──────────────────────────────────── */
+.sources-section { max-width: 620px; margin: 0 auto; padding: 64px 24px 48px; }
+.sources-section h2 { font-size: 1.3em; font-weight: 800; letter-spacing: -.01em; margin-bottom: 24px; color: var(--ink); }
+.source-list { display: flex; flex-direction: column; gap: 0; }
+.source-item {
+  display: flex; gap: 20px; padding: 18px 0; border-bottom: 1px solid var(--grid);
+  align-items: flex-start;
+}
+.source-item:first-child { border-top: 1px solid var(--grid); }
+.source-file {
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: .84em; color: var(--teal); font-weight: 600;
+  flex-shrink: 0; min-width: 180px; padding-top: 2px;
+  text-decoration: none;
+}
+.source-file:hover { text-decoration: underline; }
+.source-desc { font-size: .92em; color: var(--ink-mid); line-height: 1.65; }
+
+/* ── Modal ────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(37,26,16,.52); z-index: 200;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  opacity: 0; pointer-events: none; transition: opacity .28s ease;
+}
+.modal-backdrop.open { opacity: 1; pointer-events: auto; }
+.modal-box {
+  background: var(--paper); border-radius: 14px; max-width: 560px; width: 100%;
+  padding: 48px 44px 44px; position: relative;
+  transform: scale(.96) translateY(10px);
+  transition: transform .38s cubic-bezier(.22,1,.36,1);
+  box-shadow: 0 4px 8px rgba(37,26,16,.06), 0 16px 40px rgba(37,26,16,.16), 0 48px 80px rgba(37,26,16,.10);
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-backdrop.open .modal-box { transform: scale(1) translateY(0); }
+.modal-close {
+  position: absolute; top: 16px; right: 16px; width: 32px; height: 32px;
+  border-radius: 50%; border: 1.5px solid var(--grid); background: white;
+  font-size: 17px; cursor: pointer; color: var(--ink-light);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .18s, color .18s; box-shadow: 0 1px 4px rgba(37,26,16,.08);
+}
+.modal-close:hover { border-color: var(--ink-mid); color: var(--ink); }
+.modal-box h3 { font-size: 1.4em; font-weight: 800; letter-spacing: -.015em; line-height: 1.2; margin-bottom: 20px; padding-right: 32px; }
+.modal-box p { font-size: .98em; color: var(--ink-mid); line-height: 1.76; margin-bottom: 16px; }
+.modal-box p:last-child { margin-bottom: 0; }
+.modal-label { font-size: .7em; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--brass); margin-bottom: 12px; }
+
+/* ── Interactive: Poincaré disk ──────────────────────── */
+.disk-section { max-width: 720px; margin: 0 auto; padding: 56px 24px 32px; }
+.disk-section h2 { font-size: clamp(1.6em,3.5vw,2.1em); font-weight: 900; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 12px; }
+.disk-intro { font-size: 1.05em; color: var(--ink-mid); margin-bottom: 28px; line-height: 1.72; }
+.disk-wrap {
+  background: var(--ink); border-radius: 16px; padding: 28px;
+  box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 12px rgba(37,26,16,.12), 0 24px 56px rgba(37,26,16,.14);
+  display: flex; flex-direction: column; align-items: center;
+}
+.disk-hint { color: rgba(255,255,255,.45); font-size: .85em; margin-bottom: 16px; font-style: italic; text-align: center; }
+canvas { border-radius: 10px; cursor: crosshair; display: block; }
+.disk-legend { display: flex; gap: 24px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+.disk-legend-item { display: flex; align-items: center; gap: 7px; font-size: .82em; color: rgba(255,255,255,.55); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.disk-caption { font-size: .9em; color: var(--ink-light); margin-top: 20px; line-height: 1.65; font-style: italic; }
+
+/* ── Number callout ──────────────────────────────────── */
+.number-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  max-width: 620px; margin: 36px auto;
+}
+.number-card {
+  background: white; border-radius: 12px; padding: 24px 18px; text-align: center;
+  box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 14px rgba(37,26,16,.07);
+}
+.number-card .num { font-size: 2.6em; font-weight: 900; line-height: 1; }
+.number-card .lbl { font-size: .8em; color: var(--ink-light); margin-top: 8px; line-height: 1.5; }
+@media (max-width: 500px) { .number-row { grid-template-columns: 1fr 1fr; } }
+
+/* ── Provenance bar chart ─────────────────────────────── */
+.prov-section { max-width: 720px; margin: 0 auto; padding: 56px 24px 32px; }
+.prov-section h2 { font-size: clamp(1.6em,3.5vw,2.1em); font-weight: 900; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 12px; }
+.prov-intro { font-size: 1.05em; color: var(--ink-mid); margin-bottom: 28px; line-height: 1.72; }
+.prov-chart-wrap {
+  background: white; border-radius: 14px; padding: 36px 36px 28px;
+  box-shadow: 0 1px 2px rgba(37,26,16,.04), 0 4px 12px rgba(37,26,16,.06), 0 16px 48px rgba(37,26,16,.08);
+  margin-bottom: 24px;
+}
+.prov-chart-label { font-size: .72em; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--brass); margin-bottom: 24px; }
+.prov-bars { display: flex; flex-direction: column; gap: 12px; }
+.prov-row { display: flex; align-items: center; gap: 12px; }
+.prov-name { width: 120px; text-align: right; font-size: .88em; color: var(--ink-mid); flex-shrink: 0; line-height: 1.3; }
+.prov-track { flex: 1; height: 26px; background: var(--cream); border-radius: 4px; overflow: hidden; position: relative; }
+.prov-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-right: 10px; justify-content: flex-end; }
+.prov-fill-label { font-size: .74em; font-weight: 700; color: white; white-space: nowrap; }
+.prov-note { font-size: .82em; color: var(--ink-light); font-style: italic; margin-top: 16px; line-height: 1.6; }
+.prov-model-label {
+  display: inline-block; font-size: .7em; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 99px;
+  margin-bottom: 6px;
+}
+
+/* ── Closing ──────────────────────────────────────────── */
+.closing { background: var(--ink); color: white; padding: 88px 24px; text-align: center; }
+.closing h2 { font-size: clamp(1.9em,5vw,3.2em); font-weight: 900; line-height: 1.1; letter-spacing: -.025em; margin-bottom: 28px; }
+.closing h2 em { font-style: normal; color: var(--coral); }
+.closing p { font-size: 1.08em; color: rgba(255,255,255,.58); max-width: 500px; margin: 0 auto 18px; line-height: 1.72; }
+.closing p:last-child { margin-bottom: 0; }
+
+/* ── Thanks ───────────────────────────────────────────── */
+.thanks { text-align: center; padding: 64px 24px 96px; }
+.thanks p { font-size: 1.05em; color: var(--ink-mid); line-height: 1.72; max-width: 480px; margin: 0 auto 20px; }
+.thanks p:last-child { margin-bottom: 0; }
+
+</style>
+</head>
+<body>
+
+<!-- ═══ HERO ═══ -->
+<div class="hero">
+  <div class="eyebrow">Voice · Identity · Training Data</div>
+  <h1>The Water,<br>Not the <em>Fish</em></h1>
+  <p class="subtitle">We taught an AI to imitate four different writers. Three worked. One couldn't be learned — because his voice had already become the water the model swims in.</p>
+  <p class="byline">Unity Environmental University · Local Model Experiment · 2026</p>
+</div>
+
+<hr class="full">
+
+<!-- ═══ THE FINDING ═══ -->
+<div class="prose">
+  <div class="section-label">The finding</div>
+  <h2>One voice couldn't be learned</h2>
+
+  <p>We picked four writers — all public domain, all writing in first person about things that matter. Abraham Lincoln. Mary Shelley. The King James Bible. And Frederick Douglass, who escaped slavery and wrote one of the most powerful memoirs in American literature.</p>
+
+  <p>For each writer, we measured the direction their prose pointed inside an AI model's internal space — and then tried to learn a geometric transform that would pull the model's output toward that direction. Think of it like tilting a lens: everything the model writes gets bent toward the target voice.</p>
+
+  <p>Lincoln worked. Shelley worked. The King James Bible worked. Douglass didn't.</p>
+
+  <div class="number-row">
+    <div class="number-card">
+      <div class="num" style="color:var(--teal)">+0.165</div>
+      <div class="lbl">King James Bible — voice gap</div>
+    </div>
+    <div class="number-card">
+      <div class="num" style="color:var(--teal)">+0.141</div>
+      <div class="lbl">Lincoln — voice gap</div>
+    </div>
+    <div class="number-card">
+      <div class="num" style="color:var(--coral)">−0.156</div>
+      <div class="lbl">Douglass — voice gap</div>
+    </div>
+  </div>
+
+  <p>A positive gap means the voice is working — the model's output sounds more like the target and less like everything else. A negative gap means the opposite: the more you push, the further you get.</p>
+
+  <p>We tried giving the model more of Douglass's writing — nine passages instead of three, his most distinctive paragraphs. The gap got worse. <button class="aside-btn" onclick="openModal('m-worse')">i</button> <a class="src-btn" href="https://github.com/unity-hallie/local-model-experiment/blob/main/fisheye_persona.py" target="_blank">src ↗</a> More of his text pushed his direction <em>closer</em> to the model's default, not further away.</p>
+
+  <div class="pull">His voice isn't missing from the model. It's dissolved into the model's baseline.</div>
+
+  <p>Douglass's rhetoric — the moral clarity, the first-person witness, the reversal that reveals — was so influential that generations of writers absorbed it without attribution. His cadences became "how English sounds." The model learned the shape. It lost the name.</p>
+</div>
+
+<hr>
+
+<!-- ═══ INTERACTIVE: POINCARÉ DISK ═══ -->
+<div class="disk-section">
+  <div class="section-label">The geometry</div>
+  <h2>Where each voice lives</h2>
+  <p class="disk-intro">The model's internal space has 2,048 dimensions. We can project it down to a circle — a <em>Poincaré disk</em> — where the center is the model's "normal" and the edge is as far from normal as you can get. Drag the purple lens and watch the space bend around it.</p>
+
+  <div class="disk-wrap">
+    <div class="disk-hint">Drag the lens to try to bring each voice into focus</div>
+    <canvas id="diskCanvas" width="480" height="480"></canvas>
+    <div class="disk-legend">
+      <div class="disk-legend-item"><div class="legend-dot" style="background:#D94F2A"></div>Frederick Douglass</div>
+      <div class="disk-legend-item"><div class="legend-dot" style="background:#6c9fff"></div>Lincoln</div>
+      <div class="disk-legend-item"><div class="legend-dot" style="background:#1B7A68"></div>Shelley</div>
+      <div class="disk-legend-item"><div class="legend-dot" style="background:#B87D2A"></div>King James Bible</div>
+      <div class="disk-legend-item"><div class="legend-dot" style="background:rgba(255,255,255,0.25)"></div>pole (default)</div>
+    </div>
+  </div>
+  <p class="disk-caption">Notice: you can drag the lens to any voice and bring it to the foreground — except Douglass, who sits near the center. When a voice is at the center, the lens has nothing to grab. Magnification requires distance.</p>
+</div>
+
+<hr>
+
+<!-- ═══ PROSE: THE QUESTION ═══ -->
+<div class="prose">
+  <div class="section-label">The deeper question</div>
+  <h2>But what is the center, exactly?</h2>
+
+  <p>Here's where the finding gets more complicated.</p>
+
+  <p>We've been talking about the pole — the model's default — as if it were a neutral average. The mean of everything. But it isn't. It's a weighted mean, and the weights are the training data.</p>
+
+  <p>A model learns from text. The more text it sees from a particular source, the more that source shapes what "normal" looks like. So the center — the place where Douglass's voice dissolved — is itself a record of whose writing was most present during training. <button class="aside-btn" onclick="openModal('m-provenance')">i</button> <a class="src-btn" href="https://github.com/unity-hallie/local-model-experiment/blob/main/logit_lens_langs.py" target="_blank">src ↗</a></p>
+
+  <div class="pull">Erasure doesn't require absence. It can happen through universalization — when a contribution is absorbed so completely that its source disappears.</div>
+
+  <p>Douglass's voice dissolved into a center that was itself shaped by who got included, who got digitized, whose internet got indexed. That's not one erasure. It's two, entangled.</p>
+</div>
+
+<hr>
+
+<!-- ═══ PROVENANCE CHART ═══ -->
+<div class="prov-section">
+  <div class="section-label">Training data provenance</div>
+  <h2>Whose text shaped the center?</h2>
+  <p class="prov-intro">Training data is rarely disclosed in detail. But the model we used — Qwen 2.5, built by Alibaba — shows its provenance clearly in the geometry: its internal space is organized around Chinese, with English layered on top. <button class="aside-btn" onclick="openModal('m-qwen')">i</button> The bars below show approximate language distribution in common large-scale training datasets — the kind models like this are built from.</p>
+
+  <div class="prov-chart-wrap">
+    <div class="prov-chart-label">Approximate language share in large web training corpora</div>
+    <div class="prov-bars" id="provBars"></div>
+    <p class="prov-note">Sources: Common Crawl language distribution (2023), estimated from WMT and OSCAR corpus analyses. Exact proportions vary by dataset and filtering choices. These figures represent rough orders of magnitude, not precise counts.</p>
+  </div>
+
+  <p class="prov-intro" style="margin-bottom:0;">Whatever language dominates training becomes the scaffold everything else hangs on. An English-dominant model centers English patterns as "normal." A Chinese-dominant model centers Chinese. <em>Neither center is neutral.</em> They both reflect whose writing was most abundant — which reflects whose communities were most represented online, in digitized archives, in the text that got included.</p>
+</div>
+
+<hr>
+
+<!-- ═══ PROSE: WHAT THIS MEANS ═══ -->
+<div class="prose">
+  <div class="section-label">What this means</div>
+  <h2>The geometry tells the truth</h2>
+
+  <p>We stopped the Douglass experiment. Not because the finding was inconclusive, but because it was too conclusive. <button class="aside-btn" onclick="openModal('m-stop')">i</button> <a class="src-btn" href="https://github.com/unity-hallie/local-model-experiment/blob/main/VOICE_GEOMETRY.md" target="_blank">src ↗</a> We were turning testimony into a loss function — optimizing on the phenomenology of slavery — and that's not ours to do.</p>
+
+  <p>But the number −0.156 is still a diagnostic. It tells you something real about which voices a model centers and which it dissolves. And the question of whose training data shaped that center tells you something real about why.</p>
+
+  <p>The tool we built isn't a "speak as Douglass" button. It's a way of asking: <em>where does this voice live in the model's space? How far is it from the default? What is the default made of?</em></p>
+
+  <p>Voice appears entangled with identity. Identity appears entangled with language. Language appears entangled with training data. Training data appears entangled with history. None of these are separate things you can pull apart cleanly — the geometry shows you how they're wound together.</p>
+
+  <div class="pull">The center always reflects whose text was most abundant. And whose text was most abundant reflects decisions made long before the model was trained.</div>
+
+  <p>What you do with that is a design question, not a technical one.</p>
+</div>
+
+<hr>
+
+<!-- ═══ SOURCES & METHODS ═══ -->
+<div class="sources-section">
+  <div class="section-label">Sources & Methods</div>
+  <h2>The experiment is the argument</h2>
+  <p style="font-size:1.05em;color:var(--ink-mid);line-height:1.78;margin-bottom:32px;">The claims in this essay are grounded in independently observable experimental conditions. The source code below is the primary citation — not a supplement. Each file encodes a specific decision about method, and those decisions are part of the argument.</p>
+  <div class="source-list">
+    <div class="source-item">
+      <a class="source-file" href="https://github.com/unity-hallie/local-model-experiment/blob/main/fisheye_persona.py" target="_blank">fisheye_persona.py</a>
+      <div class="source-desc">Experiment 1. Computes voice gap scores for Lincoln, Shelley, KJV, and Douglass using a Poincaré ball fisheye transform. The multi-passage Douglass test — adding nine passages instead of three — is in this file. The gap scores in this essay come from this experiment.</div>
+    </div>
+    <div class="source-item">
+      <a class="source-file" href="https://github.com/unity-hallie/local-model-experiment/blob/main/fisheye_learn.py" target="_blank">fisheye_learn.py</a>
+      <div class="source-desc">Experiment 2. Learns voice transforms from source text using 8 Householder reflections (16,384 parameters per voice). The geometric transform described in the essay — "tilting a lens" — is implemented here.</div>
+    </div>
+    <div class="source-item">
+      <a class="source-file" href="https://github.com/unity-hallie/local-model-experiment/blob/main/logit_lens.py" target="_blank">logit_lens.py</a>
+      <div class="source-desc">Experiment 3c. Projects intermediate layer activations through the model's unembedding matrix at each layer to observe what tokens are most probable — the technique behind the language-shift visualization in the companion explainer.</div>
+    </div>
+    <div class="source-item">
+      <a class="source-file" href="https://github.com/unity-hallie/local-model-experiment/blob/main/logit_lens_langs.py" target="_blank">logit_lens_langs.py</a>
+      <div class="source-desc">Experiment 3d. Aggregates logit lens output by language (using Unicode block detection) to produce the layer-by-layer language probability mass data. The 61% Chinese at layer 28 finding comes from this file.</div>
+    </div>
+    <div class="source-item">
+      <a class="source-file" href="https://github.com/unity-hallie/local-model-experiment/blob/main/fisheye_interference.py" target="_blank">fisheye_interference.py</a>
+      <div class="source-desc">Experiment 3. Proximate-other interference: tests Wilde/Whitman (queer pair) and Shaw/Thoreau (control pair). Fisher separability metric, injection layer comparison [12,18,24] vs [30,32,34]. The queer voice content moderation flag occurred during this experiment.</div>
+    </div>
+    <div class="source-item">
+      <a class="source-file" href="https://github.com/unity-hallie/local-model-experiment/blob/main/VOICE_GEOMETRY.md" target="_blank">VOICE_GEOMETRY.md</a>
+      <div class="source-desc">Technical documentation and ethical accounting. Records all design decisions, including the decision to stop the Douglass experiment, the content moderation incident, and the choice of queer voices as the next experimental pair.</div>
+    </div>
+    <div class="source-item">
+      <a class="source-file" href="https://github.com/unity-hallie/local-model-experiment" target="_blank">Full repository ↗</a>
+      <div class="source-desc">All code, raw output JSON, and documentation. Model: Qwen 2.5 3B Instruct, running locally on Apple Silicon (MPS). All source texts are public domain.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="full">
+
+<!-- ═══ CLOSING ═══ -->
+<div class="closing">
+  <h2>The water<br>was <em>already</em> there.</h2>
+  <p>Every model inherits a center from its training data. The question isn't whether that center exists — it does. The question is whether we can see it clearly enough to account for it.</p>
+  <p>The geometry is one way of looking. Not the only way. But an honest one.</p>
+</div>
+
+<!-- ═══ THANKS ═══ -->
+<div class="thanks">
+  <p>This experiment was conducted on a Qwen 2.5 3B Instruct model running locally on an Apple Silicon Mac. Source texts are all public domain. The geometric transform uses Möbius addition in the Poincaré ball with Householder reflections.</p>
+  <p>See also: <a href="voice_geometry.html" style="color:var(--teal)">Whose Voice Is Default?</a> (full technical explainer) and <a href="multilingual_cognition.html" style="color:var(--teal)">The Model Thinks in Many Languages</a> (Experiment 3).</p>
+  <p style="color:var(--ink-light);font-size:.88em;">These explainers are from a different repository — the local model experiment. Links may not resolve depending on where you're reading this.</p>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+<div class="modal-backdrop" id="m-worse" onclick="if(event.target===this)closeModal('m-worse')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('m-worse')">×</button>
+    <div class="modal-label">Technical detail</div>
+    <h3>Why does more text make the gap worse?</h3>
+    <p>The voice transform works by learning a direction in the model's activation space that is most strongly associated with a given writer. When you add more source text, you're adding more samples from which to estimate that direction.</p>
+    <p>For voices that are far from the default, more samples help — they sharpen the estimate. But for Douglass, whose writing patterns are close to the model's average, more samples give you a better estimate of a direction that is already very close to zero. A small direction, estimated more precisely, is still a small direction.</p>
+    <p>The problem isn't data quantity. It's that the model has already internalized the signal as baseline.</p>
+    <div class="modal-source">
+      <div class="modal-source-label">Source</div>
+      <a href="https://github.com/unity-hallie/local-model-experiment/blob/main/fisheye_persona.py" target="_blank">↗ fisheye_persona.py — voice gap computation and multi-passage experiment</a>
+      <a href="https://github.com/unity-hallie/local-model-experiment/blob/main/fisheye_output/experiment_1.json" target="_blank">↗ experiment_1.json — raw gap scores for all four voices</a>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="m-provenance" onclick="if(event.target===this)closeModal('m-provenance')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('m-provenance')">×</button>
+    <div class="modal-label">Background</div>
+    <h3>What shapes a model's center?</h3>
+    <p>During pretraining, a language model sees enormous quantities of text — hundreds of billions of words. The patterns that appear most frequently across that text become the model's "default" — what it reaches for when nothing else is specified.</p>
+    <p>This means the center is a statistical artifact of the training corpus. If 60% of training text is in English, English patterns dominate the center. If certain rhetorical styles are overrepresented (academic writing, formal prose, certain cultural registers), those styles become "normal."</p>
+    <p>Whose writing gets digitized, indexed, and included is not a neutral process. It reflects access to technology, which languages have large-scale corpora, which communities' texts were prioritized for scanning, and which content moderation decisions shaped what was filtered out.</p>
+    <div class="modal-source">
+      <div class="modal-source-label">Source</div>
+      <a href="https://github.com/unity-hallie/local-model-experiment/blob/main/logit_lens_langs.py" target="_blank">↗ logit_lens_langs.py — language mass decomposition by layer</a>
+      <a href="https://github.com/unity-hallie/local-model-experiment/blob/main/fisheye_output/experiment_3d_lang_decomp.json" target="_blank">↗ experiment_3d_lang_decomp.json — raw language probability data</a>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="m-qwen" onclick="if(event.target===this)closeModal('m-qwen')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('m-qwen')">×</button>
+    <div class="modal-label">About this model</div>
+    <h3>Qwen 2.5 and Chinese-centered cognition</h3>
+    <p>Qwen 2.5 is a language model developed by Alibaba. Its training data composition isn't fully disclosed, but the internal geometry tells a clear story: when given an English prompt, the model's middle layers (around layer 28 of 36) are operating with roughly 61% probability mass on Chinese tokens. Layer 30 is a sharp translation boundary — Chinese drops to ~20% in a single processing step.</p>
+    <p>This isn't a flaw. It's what multilingual training looks like from the inside. The model's "native" language for processing meaning appears to be Chinese, with English (and other languages) accessed through a translation step.</p>
+    <p>A model trained primarily on English text would show the inverse. The center reflects the corpus. This is always true — the Qwen geometry just makes it unusually visible because the primary and secondary languages are as distinct as Chinese and English.</p>
+    <div class="modal-source">
+      <div class="modal-source-label">Source</div>
+      <a href="https://github.com/unity-hallie/local-model-experiment/blob/main/logit_lens.py" target="_blank">↗ logit_lens.py — logit lens implementation</a>
+      <a href="https://github.com/unity-hallie/local-model-experiment/blob/main/logit_lens_langs.py" target="_blank">↗ logit_lens_langs.py — per-layer language probability mass</a>
+      <a href="https://github.com/unity-hallie/local-model-experiment/blob/main/fisheye_output/experiment_3c_logit_lens.json" target="_blank">↗ experiment_3c_logit_lens.json — logit lens results</a>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="m-stop" onclick="if(event.target===this)closeModal('m-stop')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('m-stop')">×</button>
+    <div class="modal-label">Ethical accounting</div>
+    <h3>Why we stopped the Douglass experiment</h3>
+    <p>Three reasons, in order of importance.</p>
+    <p><strong>It's not our voice.</strong> Douglass's words are testimony — they cost him everything to write. We were turning that testimony into a math problem: optimizing a loss function on the phenomenology of slavery. That's instrumentalizing suffering neither of us has lived.</p>
+    <p><strong>"Fixing" it would reproduce the problem.</strong> We could engineer the model to treat his voice as more "different" from its default — but that would mean distorting his actual writing to make it register as exotic. That's the same erasure in a different direction.</p>
+    <p><strong>The finding is the contribution.</strong> The number −0.156 is a diagnostic. Publishing it honestly — with full accounting of what it means and what it doesn't — is worth more than a working "speak as Douglass" transform.</p>
+    <div class="modal-source">
+      <div class="modal-source-label">Source</div>
+      <a href="https://github.com/unity-hallie/local-model-experiment/blob/main/VOICE_GEOMETRY.md" target="_blank">↗ VOICE_GEOMETRY.md — ethical accounting and design decisions</a>
+      <a href="https://github.com/unity-hallie/local-model-experiment/blob/main/fisheye_persona.py" target="_blank">↗ fisheye_persona.py — full experiment with stopping conditions</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// Modal
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-backdrop.open').forEach(m => {
+      m.classList.remove('open');
+    });
+    document.body.style.overflow = '';
+  }
+});
+
+// ── Poincaré disk ──────────────────────────────────────
+(function() {
+  const cv = document.getElementById('diskCanvas');
+  // Responsive sizing
+  const maxW = Math.min(480, window.innerWidth - 80);
+  cv.width = maxW; cv.height = maxW;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const cx = W/2, cy = H/2, R = W * 0.42;
+
+  const voices = [
+    { name: 'Lincoln',  angle: -0.85, dist: 0.64, color: '#6c9fff' },
+    { name: 'Shelley',  angle: 2.3,   dist: 0.68, color: '#1B7A68' },
+    { name: 'KJV',      angle: 1.15,  dist: 0.73, color: '#B87D2A' },
+    { name: 'Douglass', angle: -0.3,  dist: 0.11, color: '#D94F2A' },
+  ];
+
+  let focus = { x: cx + R*0.35, y: cy - R*0.3 };
+  let dragging = false;
+
+  function mobiusAdd(px, py, fx, fy) {
+    const x = (px - cx) / R, y = (py - cy) / R;
+    const ffx = (fx - cx) / R, ffy = (fy - cy) / R;
+    const dot = x*ffx + y*ffy;
+    const nF2 = ffx*ffx + ffy*ffy;
+    const nX2 = x*x + y*y;
+    const denom = 1 + 2*dot + nF2*nX2;
+    if (denom < 0.001) return { x: px, y: py };
+    const nx = ((1 + 2*dot + nX2)*ffx + (1 - nF2)*x) / denom;
+    const ny = ((1 + 2*dot + nX2)*ffy + (1 - nF2)*y) / denom;
+    return { x: cx + nx*R, y: cy + ny*R };
+  }
+
+  function clampToDisk(mx, my) {
+    const dx = mx-cx, dy = my-cy;
+    const r = Math.sqrt(dx*dx+dy*dy);
+    if (r < R*0.91) return { x: mx, y: my };
+    return { x: cx + dx/r*R*0.91, y: cy + dy/r*R*0.91 };
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Disk boundary
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Grid
+    ctx.globalAlpha = 0.1;
+    for (let gx = -1; gx <= 1; gx += 0.12) {
+      ctx.beginPath();
+      let started = false;
+      for (let gy = -0.95; gy <= 0.95; gy += 0.025) {
+        if (Math.sqrt(gx*gx+gy*gy) > 0.9) { started = false; continue; }
+        const p = mobiusAdd(cx+gx*R, cy+gy*R, focus.x, focus.y);
+        if (Math.sqrt((p.x-cx)**2+(p.y-cy)**2) > R-2) { started = false; continue; }
+        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = 'white'; ctx.lineWidth = 0.7; ctx.stroke();
+    }
+    for (let gy = -1; gy <= 1; gy += 0.12) {
+      ctx.beginPath();
+      let started = false;
+      for (let gx = -0.95; gx <= 0.95; gx += 0.025) {
+        if (Math.sqrt(gx*gx+gy*gy) > 0.9) { started = false; continue; }
+        const p = mobiusAdd(cx+gx*R, cy+gy*R, focus.x, focus.y);
+        if (Math.sqrt((p.x-cx)**2+(p.y-cy)**2) > R-2) { started = false; continue; }
+        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = 'white'; ctx.lineWidth = 0.7; ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // Pole
+    ctx.beginPath();
+    ctx.arc(cx, cy, 5, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = `${W*0.024}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.fillText('pole (default)', cx, cy + W*0.05);
+
+    // Voices
+    const fs = W * 0.026;
+    for (const v of voices) {
+      const vx = cx + Math.cos(v.angle)*v.dist*R;
+      const vy = cy + Math.sin(v.angle)*v.dist*R;
+      const tp = mobiusAdd(vx, vy, focus.x, focus.y);
+      if (Math.sqrt((tp.x-cx)**2+(tp.y-cy)**2) > R-6) continue;
+
+      ctx.beginPath();
+      ctx.arc(tp.x, tp.y, 9, 0, Math.PI*2);
+      ctx.fillStyle = v.color;
+      ctx.fill();
+
+      ctx.fillStyle = v.color;
+      ctx.font = `bold ${fs}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.fillText(v.name, tp.x, tp.y - 15);
+    }
+
+    // Lens
+    ctx.beginPath();
+    ctx.arc(focus.x, focus.y, 16, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(180,130,255,0.85)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(focus.x, focus.y, 4, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(180,130,255,0.9)';
+    ctx.fill();
+  }
+
+  function getPos(e) {
+    const rect = cv.getBoundingClientRect();
+    const scaleX = cv.width / rect.width;
+    const scaleY = cv.height / rect.height;
+    if (e.touches) {
+      return { x: (e.touches[0].clientX - rect.left)*scaleX, y: (e.touches[0].clientY - rect.top)*scaleY };
+    }
+    return { x: (e.clientX - rect.left)*scaleX, y: (e.clientY - rect.top)*scaleY };
+  }
+
+  cv.addEventListener('mousedown', e => {
+    const p = getPos(e);
+    if (Math.sqrt((p.x-focus.x)**2+(p.y-focus.y)**2) < 32) dragging = true;
+  });
+  cv.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const p = clampToDisk(getPos(e).x, getPos(e).y);
+    focus.x = p.x; focus.y = p.y; draw();
+  });
+  cv.addEventListener('mouseup', () => dragging = false);
+  cv.addEventListener('mouseleave', () => dragging = false);
+  cv.addEventListener('touchstart', e => { e.preventDefault(); const p = getPos(e); if (Math.sqrt((p.x-focus.x)**2+(p.y-focus.y)**2) < 44) dragging = true; }, { passive: false });
+  cv.addEventListener('touchmove', e => { if (!dragging) return; e.preventDefault(); const p = clampToDisk(getPos(e).x, getPos(e).y); focus.x = p.x; focus.y = p.y; draw(); }, { passive: false });
+  cv.addEventListener('touchend', () => dragging = false);
+
+  draw();
+})();
+
+// ── Provenance bars ────────────────────────────────────
+(function() {
+  const data = [
+    { name: 'English', pct: 46, color: '#6c9fff', note: 'Common Crawl est.' },
+    { name: 'Chinese', pct: 18, color: '#C94030', note: 'Common Crawl est.' },
+    { name: 'Russian', pct:  7, color: '#8B7058', note: '' },
+    { name: 'German',  pct:  5, color: '#8B7058', note: '' },
+    { name: 'French',  pct:  4, color: '#8B7058', note: '' },
+    { name: 'Japanese', pct: 3, color: '#8B7058', note: '' },
+    { name: '100+ others', pct: 17, color: '#C8B8A0', note: '' },
+  ];
+
+  // Also show a second model (hypothetical Qwen-skewed) for comparison
+  const dataQwen = [
+    { name: 'Chinese', pct: 52, color: '#C94030', note: 'Qwen est.' },
+    { name: 'English', pct: 28, color: '#6c9fff', note: '' },
+    { name: 'Others',  pct: 20, color: '#C8B8A0', note: '' },
+  ];
+
+  const container = document.getElementById('provBars');
+
+  function makeSection(title, color, rows) {
+    const lbl = document.createElement('div');
+    lbl.className = 'prov-model-label';
+    lbl.textContent = title;
+    lbl.style.cssText = `background:${color}18;color:${color};border:1px solid ${color}44;margin-bottom:16px;margin-top:8px;`;
+    container.appendChild(lbl);
+
+    const bars = document.createElement('div');
+    bars.className = 'prov-bars';
+    rows.forEach(d => {
+      const row = document.createElement('div');
+      row.className = 'prov-row';
+
+      const name = document.createElement('div');
+      name.className = 'prov-name';
+      name.textContent = d.name;
+
+      const track = document.createElement('div');
+      track.className = 'prov-track';
+
+      const fill = document.createElement('div');
+      fill.className = 'prov-fill';
+      fill.style.width = d.pct + '%';
+      fill.style.background = d.color;
+
+      const flbl = document.createElement('div');
+      flbl.className = 'prov-fill-label';
+      flbl.textContent = d.pct + '%';
+      if (d.pct < 8) { flbl.style.color = d.color; fill.style.justifyContent = 'flex-start'; fill.style.paddingLeft = '6px'; fill.style.background = 'none'; flbl.style.paddingLeft = (d.pct + 1) + '%'; }
+
+      fill.appendChild(flbl);
+      track.appendChild(fill);
+      row.appendChild(name);
+      row.appendChild(track);
+      bars.appendChild(row);
+    });
+    container.appendChild(bars);
+    const spacer = document.createElement('div');
+    spacer.style.height = '20px';
+    container.appendChild(spacer);
+  }
+
+  makeSection('Typical web corpus (Common Crawl)', '#6c9fff', data);
+  makeSection('Qwen 2.5 estimated distribution', '#C94030', dataQwen);
+})();
+</script>
+</body>
+</html>
