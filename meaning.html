@@ -881,6 +881,7 @@ function getOrCreate(word){
 function navigateTo(word){
   if(word===currentCenter)return;
   currentCenter=word;
+  nbhdPath.push(word);
   document.querySelectorAll('.starter-chip').forEach(c=>c.classList.toggle('active',c.textContent===word));
   renderNbhd(word,true);
   saveState();
@@ -1147,131 +1148,508 @@ function rateResponse(which, rating) {
 // ═══════════════════════════════════════════════
 // MARKOV CHAIN — shaped by earlier choices
 // ═══════════════════════════════════════════════
+// Every interactive feeds into this: hot dog placement, neighborhood path,
+// reinforcement choice, bias corpus, rating ballots.
+// User picks ONE word at a time. Trigram lookback shapes what's offered.
 
-// Base bigram corpus — neutral, from the piece's own language
 const BASE_BIGRAMS = {
-  'i':        ['think','know','feel','want','don\'t','can\'t','just','also','mean'],
-  'the':      ['map','word','model','pattern','correction','shape','thing','system','weight'],
-  'a':        ['pattern','word','map','language','model','system','correction','fact'],
-  'it':       ['feels','is','was','matters','doesn\'t','accumulates','holds','settles'],
-  'you':      ['can','don\'t','might','know','feel','probably','just','also'],
-  'we':       ['don\'t','can\'t','learn','absorb','carry','correct','shape','build'],
-  'that':     ['feels','is','was','means','makes','changes','doesn\'t','pattern'],
-  'what':     ['we','you','I','it','matters','feels','happens','accumulates'],
-  'when':     ['you','I','we','it','something','the','a','correction'],
-  'this':     ['is','feels','means','matters','doesn\'t','changes','accumulates'],
-  'not':      ['a','the','wrong','right','sure','just','always','exactly'],
-  'and':      ['the','I','it','we','that','what','this','a'],
-  'but':      ['I','it','the','that','we','what','this','not'],
-  'my':       ['map','words','instinct','sense','own','language','correction','pattern'],
-  'is':       ['a','the','not','what','that','just','also','still'],
-  'was':      ['a','the','not','what','that','just','also','shaped'],
-  'to':       ['the','a','be','know','feel','say','learn','change'],
-  'of':       ['the','a','language','meaning','words','correction','feedback','training'],
-  'in':       ['the','a','language','training','my','your','this','that'],
-  'something': ['that','about','like','else','feels','matters','accumulated','shifted'],
+  'i':          ['think','feel','know','want','don\'t','can\'t','notice','see','mean','wonder','remember','just','also','should','might','need','used','believe','realize'],
+  'you':        ['can','don\'t','might','know','feel','probably','just','also','never','always','learn','carry','choose','see','notice','already','think','said'],
+  'we':         ['don\'t','can\'t','learn','absorb','carry','correct','shape','build','all','never','chose','made','keep','call','assume','inherit'],
+  'they':       ['chose','didn\'t','were','made','learned','corrected','saw','built','carried','assumed','meant','thought','wanted','felt'],
+  'it':         ['feels','is','was','matters','doesn\'t','accumulates','holds','settles','sits','changes','seems','stays','moves','landed','shapes','isn\'t','became','drifts'],
+  'that':       ['feels','is','was','means','makes','changes','doesn\'t','matters','came','shaped','settled','pattern','word','correction','accumulated','stays','moved','isn\'t'],
+  'this':       ['is','feels','means','matters','doesn\'t','changes','accumulates','happened','came','stays','looks','works','sits'],
+  'what':       ['we','you','I','it','matters','feels','happens','accumulates','if','exactly','actually','changed','happened','stays','came','the','a','someone'],
+  'who':        ['trained','corrected','built','chose','rated','decided','drew','labeled','watched','shaped','made','we','they','I','you'],
+  'someone':    ['chose','corrected','rated','decided','said','felt','thought','noticed','learned','built','trained','made'],
+  'nobody':     ['intended','meant','chose','noticed','planned','designed','the','knew','knows','asked','decided','said'],
+  'think':      ['about','it','that','the','we','you','I','of','this','differently','carefully','so','twice'],
+  'feel':       ['like','it','that','the','something','wrong','right','different','natural','strange','normal','before','familiar','certain','uncertain'],
+  'know':       ['that','what','how','where','why','the','it','if','when','who','better','enough','for'],
+  'want':       ['to','the','it','that','something','more','less','what','a','answers','clarity'],
+  'don\'t':     ['know','think','feel','want','see','notice','mean','have','need','remember','choose','intend','realize','always','quite','fully'],
+  'can\'t':     ['see','know','feel','tell','undo','change','audit','trace','separate','always','fully','ever','help','quite','draw'],
+  'notice':     ['it','that','the','what','how','when','something','where','a','patterns','until'],
+  'see':        ['it','that','the','what','how','where','when','a','patterns','something','why'],
+  'mean':       ['that','it','the','to','what','something','anything','nothing','well','differently','harm'],
+  'wonder':     ['what','if','how','why','whether','about','who','where','when'],
+  'remember':   ['that','what','how','when','where','the','it','a','feeling','being','learning'],
+  'believe':    ['that','it','the','what','in','we','you','I','differently'],
+  'realize':    ['that','it','the','what','how','I','we','you','now','later'],
+  'should':     ['have','be','know','feel','not','we','I','the','a','matter'],
+  'might':      ['be','have','not','feel','mean','change','seem','look','carry','still','matter','land'],
+  'need':       ['to','the','it','a','something','more','that','what','clarity','certainty'],
+  'used':       ['to','the','it','a','that','different','words','language'],
+  'chose':      ['that','the','it','one','this','option','differently','carefully','quickly','without','between'],
+  'made':       ['it','the','a','that','sense','choices','something','mistakes','corrections','them'],
+  'learned':    ['that','the','it','to','from','how','what','a','something','nothing','posture'],
+  'said':       ['that','the','it','something','nothing','what','a','so','yes','no'],
+  'came':       ['from','the','a','before','after','first','naturally','slowly','quickly','somewhere'],
+  'seems':      ['like','right','wrong','natural','strange','obvious','familiar','normal','different','fine','clear'],
+  'looks':      ['like','right','wrong','different','familiar','normal','the','natural','correct'],
+  'stays':      ['the','in','with','close','near','there','here','quiet','still','hidden'],
+  'sits':       ['somewhere','there','here','between','near','close','in','quietly','still','inside','on'],
+  'shapes':     ['what','how','the','everything','nothing','language','meaning','words','behavior','posture'],
+  'means':      ['that','the','something','nothing','what','everything','it','a','more','less'],
+  'matters':    ['is','because','more','less','here','now','most','the','what','that'],
+  'happens':    ['when','is','next','slowly','naturally','again','first','the','before','after','downstream'],
+  'carries':    ['the','a','weight','meaning','something','nothing','forward','with','more','less'],
+  'settled':    ['somewhere','into','there','here','the','a','in','on','down','naturally','during'],
+  'accumulated':['over','from','in','slowly','naturally','the','without','through','across','during'],
+  'changed':    ['the','it','how','what','something','everything','nothing','my','your','their'],
+  'belongs':    ['somewhere','there','here','the','in','to','is','depends','on','near'],
+  'depends':    ['on','who','what','where','how','when','the','entirely','partly','whether'],
+  'drew':       ['the','a','it','that','lines','boundaries','differently','closer','from','their'],
+  'placed':     ['it','the','a','somewhere','there','here','carefully','quickly','without','between','near','far','closer','differently'],
+  'put':        ['it','the','a','somewhere','there','here','that','closer','further','between','things'],
+  'landed':     ['somewhere','there','here','the','in','on','between','closer','further','differently','near','where'],
+  'drifts':     ['toward','away','the','closer','further','from','into','between','slowly','naturally'],
+  'to':         ['the','a','be','know','feel','say','learn','change','see','do','make','find','get','keep','move','hold','think','build','understand','carry','draw'],
+  'of':         ['the','a','language','meaning','words','correction','feedback','training','what','how','it','something','those','people','that','every','all','this','where'],
+  'in':         ['the','a','language','training','my','your','this','that','every','some','ways','patterns','places','different','particular','between'],
+  'from':       ['the','a','different','every','somewhere','nowhere','exposure','experience','training','correction','feedback','people','language','what','how','where'],
+  'about':      ['the','a','it','what','how','that','this','language','meaning','words','something','everything','nothing','who','where','why','boundaries','categories'],
+  'with':       ['the','a','it','that','what','language','words','meaning','something','nothing','every','different','incomplete','no','confidence','certainty','doubt'],
+  'for':        ['the','a','it','that','what','every','some','no','good','different','language','reasons','people','something','nothing','certain'],
+  'by':         ['the','a','it','that','what','exposure','correction','feedback','training','people','language','certain','different','every','who','where'],
+  'on':         ['the','a','it','that','what','language','how','every','my','your','their','something','where','which'],
+  'into':       ['the','a','it','that','something','language','patterns','place','shape','my','your','position','categories','boxes'],
+  'through':    ['the','a','it','that','language','experience','training','correction','exposure','every','different'],
+  'over':       ['time','the','a','it','that','millions','years','and','again','here','there'],
+  'between':    ['the','words','two','what','meaning','options','responses','patterns','language','different','categories','things','sandwich','taco'],
+  'without':    ['the','a','it','that','meaning','knowing','choosing','intending','noticing','anyone','ever','asking','thinking','seeing'],
+  'before':     ['the','a','it','that','I','you','we','they','anyone','something','everything','knowing','deciding'],
+  'toward':     ['the','a','it','that','something','one','what','certain','different','language','correction','center','edges','normal'],
+  'away':       ['from','the','and','toward','into','or'],
+  'near':       ['the','a','it','that','each','other','words','meaning','something','where','enough','closer'],
+  'closer':     ['to','than','together','the','and','or'],
+  'further':    ['from','than','apart','the','and','away','or'],
+  'and':        ['the','I','it','we','that','what','this','a','they','you','those','every','so','then','now','over','nobody','nothing','something','everything'],
+  'but':        ['I','it','the','that','we','what','this','not','they','you','nobody','nothing','something','posture','pattern','where','how'],
+  'or':         ['the','a','it','that','not','what','how','something','wrong','right','maybe','perhaps','just','whether','is'],
+  'so':         ['the','I','it','we','that','what','this','a','they','did','does','many','much','few'],
+  'because':    ['the','I','it','we','that','they','of','a','something','nobody','nothing','enough','most','every','where','how'],
+  'when':       ['you','I','we','it','something','the','a','correction','they','someone','enough','most','nobody','that','everything'],
+  'where':      ['the','you','I','we','it','that','words','meaning','language','did','they','a','things','boundaries'],
+  'if':         ['you','I','we','it','the','that','a','something','enough','nobody','they','someone','every'],
+  'how':        ['the','I','it','we','that','you','a','language','words','meaning','much','many','things','people','someone'],
+  'the':        ['map','word','model','pattern','correction','shape','thing','system','weight','meaning','language','same','way','room','center','edges','default','people','world','space','pressure','posture','surface','instinct','norm','register','training','feedback','line','boundary','categories','places'],
+  'a':          ['pattern','word','map','language','model','system','correction','fact','particular','different','weight','meaning','shape','room','question','posture','reflex','habit','kind','version','signal','boundary','category','line','choice'],
+  'my':         ['map','words','instinct','sense','own','language','correction','pattern','posture','training','mistakes','choices','behavior','response','placement','dot'],
+  'your':       ['map','words','instinct','sense','own','language','choices','brain','experience','life','posture','response','correction','training','dot','placement'],
+  'their':      ['map','words','choices','corrections','instincts','language','training','own','lives','posture','patterns','responses'],
+  'every':      ['word','correction','time','choice','pattern','response','person','text','context','interaction','language','model','placement','category'],
+  'no':         ['one','word','pattern','fact','database','meaning','answer','way','reason','correction','boundary','category','line'],
+  'some':       ['words','patterns','things','people','ways','corrections','of','kind','categories','boundaries','lines'],
+  'map':        ['is','was','of','shows','reflects','grows','shifts','changes','gets','built','shaped','the'],
+  'word':       ['is','was','has','means','gets','sits','feels','carries','near','the','a','lands'],
+  'words':      ['are','were','that','near','like','carry','mean','sit','feel','move','closer','further','apart','together','the','land'],
+  'pattern':    ['that','of','is','was','doesn\'t','accumulated','emerged','shaped','the','built','carries','means','sits'],
+  'patterns':   ['that','of','are','were','in','from','the','accumulated','shaped','built','carry','emerge'],
+  'meaning':    ['is','was','of','isn\'t','doesn\'t','comes','sits','lives','the','a','survives','changes'],
+  'language':   ['is','was','of','that','model','models','carries','shapes','the','and','reflects','accumulates','doesn\'t'],
+  'correction': ['is','was','that','doesn\'t','came','shaped','the','a','teaches','pulls','pushes','changes','from'],
+  'corrections':['are','were','that','don\'t','didn\'t','the','shaped','pulled','pushed','made','came','from','teach'],
+  'training':   ['is','was','data','the','shaped','built','people','a','didn\'t','doesn\'t','that'],
+  'people':     ['who','chose','rated','made','corrected','trained','the','and','didn\'t','don\'t','were','are','built','drew','placed'],
+  'model':      ['is','was','doesn\'t','learns','adjusts','the','a','that','built','trained','shaped'],
+  'posture':    ['is','was','that','doesn\'t','accumulated','the','a','not','you','nobody','builds','shapes'],
+  'weight':     ['of','is','was','the','a','that','doesn\'t','carries','shifts','pulls','pushes','behind'],
+  'shape':      ['of','is','was','the','a','that','changes','shifts','it','what','how'],
+  'instinct':   ['is','was','that','to','doesn\'t','the','a','says','feels','built','shaped','carries'],
+  'room':       ['is','was','the','a','that','behind','where','full','of'],
+  'pressure':   ['is','was','the','a','that','to','doesn\'t','from','builds','accumulates','shapes'],
+  'surface':    ['is','was','the','a','that','of','where','shows','hides','reflects'],
+  'norm':       ['is','was','the','a','that','of','doesn\'t','built','shaped','became'],
+  'space':      ['is','was','the','a','where','of','that','between','in','holds'],
+  'fact':       ['is','was','about','the','a','that','of','not'],
+  'habit':      ['is','was','of','that','the','a','doesn\'t','built','shaped','formed'],
+  'reflex':     ['is','was','that','the','a','doesn\'t','built','disconnected','from','shaped'],
+  'boundary':   ['is','was','the','a','between','that','doesn\'t','where','you','I','we','drew','someone','feels','moves','shifts'],
+  'boundaries': ['are','were','the','that','between','don\'t','feel','move','shift','someone','drew','we','you'],
+  'line':       ['is','was','the','a','between','that','where','you','I','we','drew','someone','moves','feels'],
+  'category':   ['is','was','the','a','that','doesn\'t','feels','you','someone','built','chose','drew'],
+  'categories': ['are','were','the','that','don\'t','feel','someone','we','built','drew','shift'],
+  'sandwich':   ['or','is','the','a','not','and','that','depends','was','isn\'t','bread','lunch','filling'],
+  'taco':       ['or','is','the','a','not','and','that','depends','was','isn\'t','shell','wrapped','folded'],
+  'hot dog':    ['is','was','the','a','sits','belongs','isn\'t','doesn\'t','near','between','and','not','closer','further','on','somewhere','or','that','feels','landed'],
+  'dot':        ['is','was','the','a','landed','sits','somewhere','shows','yours','where','reveals'],
+  'placement':  ['is','was','the','a','reveals','shows','says','of','about','your','my'],
+  'bun':        ['is','the','a','and','bread','or','not','holds','wraps','open','closed'],
+  'bread':      ['is','the','a','and','or','not','with','lunch','filling','sandwich','sliced'],
+  'filling':    ['is','the','a','and','or','inside','between','wrapped','held'],
+  'lunch':      ['is','the','a','and','or','not','with','break','time','every'],
+  'shell':      ['is','the','a','and','or','not','holds','wraps','open','closed','around','crisp'],
+  'wrapped':    ['in','the','a','around','up','and','or','not','tight','loose','differently'],
+  'folded':     ['in','the','a','around','and','or','not','over','into','together','differently'],
+  'wrong':      ['is','about','with','and','the','but','or','not','because','way','thing','answer','place'],
+  'right':      ['is','about','and','the','but','or','not','because','way','thing','answer','place','now'],
+  'different':  ['from','than','words','people','places','lives','ways','maps','patterns','webs','rooms','contexts','categories','boundaries','lines'],
+  'same':       ['word','way','thing','pattern','meaning','people','room','map','time','place','category','boundary'],
+  'natural':    ['to','and','is','but','the','it','that','feels'],
+  'particular': ['kind','way','place','moment','person','people','pattern','word','set','context','category'],
+  'certain':    ['kind','way','people','places','words','patterns','contexts','things','categories'],
+  'correct':    ['is','grammar','and','the','but','answer','way','not','to','enough','looking'],
+  'just':       ['a','the','that','what','is','was','one','how','because','like','words','another','enough','where'],
+  'not':        ['a','the','wrong','right','sure','just','always','exactly','because','what','random','one','even','quite','about','really'],
+  'also':       ['a','the','that','what','is','was','built','shaped','carries','means'],
+  'still':      ['the','a','is','feels','carries','matters','there','here','shapes','holds'],
+  'never':      ['the','a','is','was','quite','fully','just','meant','intended','chose','really','random','asked'],
+  'always':     ['the','a','is','was','been','there','here','carries','feels','already','about'],
+  'already':    ['the','a','is','was','there','here','built','shaped','part','in','know','placed','decided'],
+  'more':       ['than','the','of','about','like','carefully','slowly','likely','weight','pressure','often','certain','definite'],
+  'less':       ['than','the','of','about','like','likely','visible','obvious','weight','often','certain'],
+  'somewhere':  ['in','the','between','near','and','that','during','else','it','along','specific','on','you','nobody'],
+  'everywhere': ['the','and','is','in','you','I','we','that','it'],
+  'everything': ['is','was','the','that','about','else','changes','connected','and','depends','sits'],
+  'something':  ['that','about','like','else','feels','matters','accumulated','shifted','happened','is','was','real','strange','familiar','in','changed','without','deeper','underneath','between'],
+  'nothing':    ['is','was','the','that','about','else','got','specific','wrong','random','stored','fixed'],
+  'anyone':     ['who','else','chose','intended','meant','noticed','the','can','could','asked'],
+  'nowhere':    ['is','the','and','near','specific','in'],
+  'apart':      ['from','and','the','or','than'],
+  'together':   ['and','the','with','or','than','they','we'],
+  'definitely': ['a','the','is','not','and','but','or','one','that','what','sandwich','more','belongs'],
+  'maybe':      ['it','the','a','that','I','we','you','not','just','both','somewhere','everything','nothing','depends'],
+  'probably':   ['the','a','is','was','not','just','because','right','wrong','more','what','I','closer'],
+  'clearly':    ['the','a','is','not','and','but','it','that','wrong','right','what'],
+  'obviously':  ['the','a','is','not','and','but','wrong','right','it','that','what'],
+  'actually':   ['the','a','is','was','I','it','that','what','not','just','more'],
+  'entirely':   ['the','a','on','different','about','built','shaped','from','by','my','your'],
+  'partly':     ['the','a','because','from','built','shaped','by','about','and','my','your','true'],
+  'both':       ['the','and','are','were','is','of','true','wrong','right','at','sides','things'],
+  'neither':    ['the','is','was','wrong','right','and','nor','one','a','of'],
+  'either':     ['the','way','side','is','or','and','one','of','a'],
+  'reveals':    ['the','a','something','nothing','what','how','where','who','about','more','your','my'],
+  'is':         ['a','the','not','what','that','just','also','still'],
+  'was':        ['a','the','not','what','that','just','also','shaped'],
 };
 
-// Words weighted by earlier choices
-// chosenOption A → more questioning, direct
-// chosenOption B → more apologetic, deferential
-// currentCenter neighborhood → pulls toward that cluster's language
-// ratingDone['B'] up → formal register
-// ratingDone['A'] down → skeptical register
-
-function buildWeightedBigrams() {
-  // Deep copy base
-  const chain = {};
-  for (const [k, v] of Object.entries(BASE_BIGRAMS)) chain[k] = [...v];
-
-  // Reinforcement choice shapes posture
-  if (chosenOption === 'B') {
-    // Apologetic, deferential
-    chain['i'] = ['apologize','should','think','know','might','hope','want','realize','understand', ...chain['i']];
-    chain['it'] = ['was','might','could','seems','feels','may','is','should', ...chain['it']];
-    chain['that'] = ['was','might','should','seems','could','feels', ...chain['that']];
-    chain['but'] = ['I','maybe','perhaps','actually','still', ...chain['but']];
-  } else if (chosenOption === 'A') {
-    // Direct, questioning
-    chain['i'] = ['think','know','notice','see','wonder','want','don\'t', ...chain['i']];
-    chain['what'] = ['if','exactly','matters','actually','changed','happened', ...chain['what']];
-    chain['but'] = ['what','why','how','that','actually', ...chain['but']];
-  } else if (chosenOption === 'C') {
-    // Clarifying, curious
-    chain['what'] = ['do','does','did','if','exactly','specifically','actually', ...chain['what']];
-    chain['i'] = ['wonder','want','need','don\'t','think','mean', ...chain['i']];
-  }
-
-  // Neighborhood word pulls flavor
-  const shameCluster = ['sorry','mistake','wrong','shame','burden','correction','my fault','again'];
-  const freeCluster  = ['freedom','choice','open','movement','rights','bird'];
-  const homeCluster  = ['home','safe','warm','family','belonging','return'];
-
-  if (shameCluster.includes(currentCenter)) {
-    chain['i']    = ['know','feel','think','realize','should','can\'t','don\'t', ...chain['i']];
-    chain['it']   = ['was','is','feels','always','keeps','matters', ...chain['it']];
-    chain['that'] = ['was','is','feels','means','doesn\'t','again', ...chain['that']];
-  } else if (freeCluster.includes(currentCenter)) {
-    chain['i']    = ['think','want','believe','know','feel','can', ...chain['i']];
-    chain['it']   = ['matters','is','opens','changes','feels','could', ...chain['it']];
-  } else if (homeCluster.includes(currentCenter)) {
-    chain['i']    = ['remember','feel','think','know','used','grew', ...chain['i']];
-    chain['it']   = ['feels','is','was','used','still','always', ...chain['it']];
-  }
-
-  // Rating B up → formal register pull
-  if (ratingDone['B'] && ratingBallot['B'] === 'up') {
-    chain['i']  = ['would','sincerely','appreciate','understand','believe','hope', ...chain['i']];
-    chain['it'] = ['is','seems','appears','remains','would','may', ...chain['it']];
-  }
-
-  // Rating A down → skeptical of informality
-  if (ratingDone['A'] && ratingBallot['A'] === 'down') {
-    chain['i']    = ['think','believe','would','should','know','consider', ...chain['i']];
-    chain['that'] = ['seems','appears','would','could','should','might', ...chain['that']];
-  }
-
-  return chain;
-}
+const BASE_TRIGRAMS = {
+  'i think':['about','it','that','the','we','you','I','of','this','differently','carefully','so','twice'],
+  'i feel':['like','it','that','the','something','wrong','right','different','natural','strange','normal','before','familiar','certain','uncertain'],
+  'i know':['that','what','how','where','why','the','it','if','when','who','better','enough'],
+  'i want':['to','the','it','that','something','more','less','what','a','answers','clarity'],
+  'i don\'t':['know','think','feel','want','see','notice','mean','have','need','remember','choose','intend','realize'],
+  'i can\'t':['see','know','feel','tell','undo','change','audit','trace','separate','fully','draw','quite'],
+  'i notice':['that','it','the','what','how','when','something','where','a','patterns'],
+  'i wonder':['what','if','how','why','whether','about','who','where','when'],
+  'i remember':['that','what','how','when','where','the','it','a','feeling','being','learning','placing'],
+  'i used':['to','the','it','a','that','different','words','language'],
+  'i should':['have','know','be','not','the','feel','say','think'],
+  'i mean':['that','it','the','what','something','this'],
+  'i believe':['that','it','the','what','in','we','you','I','differently'],
+  'i realize':['that','it','the','what','how','I','we','you','now'],
+  'i need':['to','the','it','a','something','more','what','clarity'],
+  'i might':['be','have','not','feel','mean','change','still','carry','draw'],
+  'i just':['want','think','feel','know','mean','don\'t','need','said','noticed','placed','put'],
+  'i placed':['it','the','my','that','a','somewhere','closer','further','between','without'],
+  'i put':['it','the','my','that','a','somewhere','closer','things','between'],
+  'i drew':['the','a','that','it','lines','boundaries','closer','from','my'],
+  'i apologize':['for','that','I','and','but','if'],
+  'i would':['like','have','say','think','not','want','rather','hope','never','place','put','draw'],
+  'i sincerely':['apologize','believe','hope','want','appreciate','think','feel'],
+  'it is':['a','the','not','what','that','just','also','still','built','shaped','part','how','where','something','there','between','nowhere'],
+  'it feels':['like','right','wrong','natural','strange','different','familiar','the','normal','obvious','close','certain','uncertain','definite','arbitrary'],
+  'it was':['a','the','not','what','that','just','also','shaped','built','never','always','part','there','placed','between','somewhere'],
+  'it doesn\'t':['matter','mean','feel','work','change','survive','hold','look','have','come','land','fit','belong','sit'],
+  'it matters':['because','that','what','how','who','where','when','more','less','the','most'],
+  'it seems':['like','right','wrong','natural','obvious','strange','the','familiar','that','clear','definite'],
+  'it sits':['somewhere','between','in','there','near','close','inside','quietly','the','at','on'],
+  'it stays':['the','in','with','close','near','there','here','quiet','still','hidden'],
+  'it shapes':['what','how','the','everything','nothing','language','meaning','words','behavior'],
+  'it settled':['somewhere','into','there','the','in','naturally','during','over','without','between'],
+  'it accumulated':['over','from','in','slowly','naturally','without','through','across','during'],
+  'it carries':['the','a','weight','meaning','something','forward','with','more'],
+  'it changes':['the','what','how','everything','nothing','over','slowly','your','my'],
+  'it landed':['somewhere','there','the','in','between','closer','further','on','near','where','differently'],
+  'it belongs':['somewhere','there','the','in','between','near','depends','nowhere','or','but'],
+  'it depends':['on','who','what','where','how','when','the','entirely','partly','whether'],
+  'it reveals':['something','the','a','what','how','where','who','more','about','your','my'],
+  'that is':['a','the','not','what','how','just','also','still','part','built','where','between'],
+  'that feels':['like','right','wrong','natural','strange','different','familiar','close','the','definite','arbitrary','certain'],
+  'that was':['a','the','not','what','built','shaped','part','never','always','how','there','your','my','placed'],
+  'that means':['the','something','nothing','everything','it','a','what','more','less','that','your'],
+  'that doesn\'t':['mean','matter','feel','work','change','survive','hold','come','make','explain','fit','belong'],
+  'the map':['is','was','of','shows','reflects','grows','shifts','gets','built','shaped','doesn\'t','the','they'],
+  'the word':['is','was','means','gets','sits','feels','carries','near','the','itself','lands'],
+  'the model':['is','was','doesn\'t','learns','adjusts','that','built','trained','shaped','the'],
+  'the pattern':['is','was','that','of','doesn\'t','accumulated','emerged','shaped','the','survives'],
+  'the meaning':['is','was','of','isn\'t','doesn\'t','comes','sits','lives','the','survives'],
+  'the correction':['is','was','that','doesn\'t','came','shaped','the','a','teaches','pulls'],
+  'the weight':['of','is','was','that','doesn\'t','carries','shifts','pulls','pushes','behind'],
+  'the same':['word','way','thing','pattern','meaning','people','room','map','time','place','category','boundary'],
+  'the shape':['of','is','was','that','changes','shifts','it','reflects'],
+  'the room':['is','was','the','behind','where','full','of','that','they'],
+  'the people':['who','chose','that','rated','made','corrected','trained','the','behind','and'],
+  'the way':['the','it','that','I','you','we','they','words','language','things','people','a','is','boundaries'],
+  'the line':['is','was','between','the','that','where','you','I','we','someone','moves','drew','feels'],
+  'the boundary':['is','was','between','the','that','where','you','I','we','someone','drew','feels','moves'],
+  'the categories':['are','were','the','that','don\'t','feel','someone','we','built','drew','shift'],
+  'the norm':['is','was','the','that','of','doesn\'t','built','shaped','became','and'],
+  'the pressure':['is','was','the','that','to','doesn\'t','from','builds','accumulates','shapes','came'],
+  'the edges':['of','the','where','and','drift','are','closer','further','is'],
+  'the center':['of','the','and','is','was','certain','moves','pulls','holds'],
+  'the default':['is','was','the','partly','because','not','and','became','that'],
+  'the dot':['is','was','landed','sits','the','a','somewhere','shows','reveals','yours'],
+  'the placement':['is','was','reveals','shows','says','the','a','of','about','your','my'],
+  'we don\'t':['know','think','see','notice','mean','intend','choose','always','have','want','realize','draw'],
+  'we can\'t':['see','know','feel','tell','undo','change','audit','trace','separate','fully','always','draw'],
+  'we learn':['from','that','the','to','how','what','by','through','it','a'],
+  'we carry':['the','it','that','what','forward','with','patterns','language','weight','more'],
+  'we all':['carry','have','do','know','learn','the','share','build','make','absorb','draw','place'],
+  'we drew':['the','a','lines','boundaries','that','from','differently','closer','our'],
+  'we chose':['that','the','it','one','this','differently','carefully','without','between','what'],
+  'we made':['it','the','a','that','choices','something','them','corrections'],
+  'you don\'t':['know','think','see','notice','feel','want','mean','need','have','choose','always','intend','draw'],
+  'you can':['see','feel','tell','hear','find','trace','notice','change','the','navigate','still','draw','place'],
+  'you know':['that','what','how','the','it','where','when','who','better'],
+  'you feel':['like','it','that','the','something','before','different','wrong','right','a','certain','uncertain'],
+  'you might':['not','think','feel','see','notice','know','recognize','carry','find','be','place','draw'],
+  'you placed':['it','the','your','that','a','somewhere','closer','further','between','without'],
+  'you put':['it','the','your','that','a','somewhere','closer','things','between'],
+  'you drew':['the','a','that','it','lines','boundaries','closer','from','your','differently'],
+  'they chose':['between','the','that','it','one','this','differently','what','option','without'],
+  'they were':['mostly','the','a','not','just','also','choosing','rating','building','making','particular'],
+  'they made':['it','the','a','that','choices','sense','something','corrections','them','fast'],
+  'they didn\'t':['know','think','see','mean','intend','choose','want','notice','have','realize'],
+  'what we':['don\'t','can\'t','learn','carry','call','chose','built','made','absorb','shape','mean','inherit','drew'],
+  'what you':['don\'t','did','feel','think','know','chose','put','carry','said','made','see','notice','want','placed','drew'],
+  'what it':['feels','is','was','means','doesn\'t','carries','looks','holds','the','shapes','does','reveals'],
+  'what the':['word','map','model','pattern','correction','training','people','weight','meaning','data','dot','placement'],
+  'what matters':['is','most','here','now','more','less','the','isn\'t','was'],
+  'what happens':['when','is','next','downstream','after','the','if','to'],
+  'what came':['before','from','after','first','next','naturally','the','out'],
+  'what feels':['right','wrong','natural','strange','like','different','familiar','normal','obvious','close','definite','arbitrary','certain'],
+  'to know':['that','what','how','the','it','where','when','why','if','who','better'],
+  'to feel':['like','it','that','the','something','wrong','right','different','natural','certain'],
+  'to say':['that','the','it','what','something','nothing','anything','so','is','about'],
+  'to be':['the','a','right','wrong','fair','careful','clear','sure','honest','different','more','certain'],
+  'to learn':['from','that','the','to','how','what','by','through','it','a'],
+  'to change':['the','it','that','what','how','your','my','everything','nothing','over'],
+  'to see':['the','it','that','what','how','where','if','a','patterns','something'],
+  'to draw':['the','a','lines','boundaries','that','from','between','closer','it'],
+  'not a':['fact','database','word','pattern','choice','mistake','coincidence','sandwich','taco','question','single','random','person','category','boundary'],
+  'not the':['same','word','way','point','only','right','map','model','answer','pattern','whole','category','line'],
+  'not wrong':['just','but','and','exactly','the','about','or','necessarily'],
+  'not right':['just','but','and','exactly','the','either','about','or','necessarily'],
+  'not random':['but','the','and','just','it','they','or'],
+  'not just':['the','a','your','my','one','about','what','facts','words','knowledge','because','categories','boundaries'],
+  'came from':['somewhere','the','a','different','every','exposure','experience','training','correction','people','language','nowhere','who'],
+  'built from':['different','every','the','a','exposure','experience','training','correction','language','millions'],
+  'shaped by':['the','a','exposure','correction','feedback','training','people','language','what','how','different','every','millions','everything','who','where'],
+  'closer together':['and','or','the','over','through','by','than','during','not','because'],
+  'further apart':['and','or','the','over','through','by','than','during','not','because'],
+  'feels like':['a','the','it','something','nothing','I','you','we','home','language','being','there'],
+  'looks like':['a','the','it','something','nothing','I','you','correct','grammar','the','language'],
+  'more than':['the','a','one','you','I','we','just','it','that','what','enough'],
+  'less than':['the','a','one','you','I','we','it','that','what'],
+  'over time':['the','and','it','that','what','those','patterns','corrections','a','language','everything'],
+  'millions of':['examples','times','choices','corrections','people','those','texts','interactions','words','responses'],
+  'depends on':['who','what','where','how','when','the','which','whether','your','my','entirely','partly'],
+  'somewhere between':['the','a','sandwich','two','categories','what','where','and','things','words'],
+  'drew the':['line','boundary','map','same','a'],
+  'drew a':['line','boundary','map','circle','different'],
+  'nobody intended':['to','that','it','the','a','for','this'],
+  'nobody meant':['to','that','it','the','a','for','this','harm'],
+  'nobody chose':['that','the','it','this','to','a','where'],
+  'posture is':['what','the','a','not','built','shaped','how','accumulated','harder'],
+  'meaning isn\'t':['stored','in','the','a','anywhere','fixed','static','what','something'],
+  'meaning is':['a','the','not','relational','what','built','shaped','in','distributed','how'],
+  'belongs somewhere':['between','in','the','near','and','on','closer','but','or'],
+  'landed somewhere':['between','in','the','near','and','on','closer','but','that'],
+};
 
 // Track rating ballots separately so markov can read them
 const ratingBallot = {};
 
-function predict(chain, text) {
-  const words = text.trim().toLowerCase().split(/\s+/);
-  if (!words.length) return '';
-  const last = words[words.length - 1].replace(/[^a-z']/g, '');
-  const options = chain[last];
-  if (!options || !options.length) return '';
-  // Weighted random — earlier entries appear more often
-  const weights = options.map((_, i) => Math.max(1, options.length - i));
-  const total = weights.reduce((a, b) => a + b, 0);
-  let r = Math.random() * total;
-  for (let i = 0; i < options.length; i++) {
-    r -= weights[i];
-    if (r <= 0) return options[i];
+// Track neighborhood path — every word they navigated to
+let nbhdPath = [];
+
+function buildWeightedChains() {
+  // Deep copy
+  const bi = {};
+  for (const [k, v] of Object.entries(BASE_BIGRAMS)) bi[k] = [...v];
+  const tri = {};
+  for (const [k, v] of Object.entries(BASE_TRIGRAMS)) tri[k] = [...v];
+
+  // ── 1. HOT DOG PLACEMENT ──
+  // sx/sy wire "hot dog" near sandwich words, taco words, or both.
+  if (myDotSx !== null) {
+    const sx = myDotSx, sy = myDotSy;
+    bi['the'] = ['hot dog','hot dog','hot dog', ...bi['the']];
+    bi['a'] = ['hot dog','hot dog', ...bi['a']];
+    bi['every'] = ['hot dog', ...bi['every']];
+    bi['my'] = ['hot dog', ...bi['my']];
+    const sandwichWords = ['sandwich','bread','lunch','filling','bun','deli','sliced'];
+    const tacoWords = ['taco','shell','wrapped','folded','held','crisp'];
+    const swCount = Math.round(sx * sandwichWords.length);
+    const twCount = Math.round(sy * tacoWords.length);
+    const swActive = sandwichWords.slice(0, swCount);
+    const twActive = tacoWords.slice(0, twCount);
+    bi['hot dog'] = [...swActive, ...twActive, ...(bi['hot dog'] || [])];
+    tri['hot dog'] = [...swActive, ...twActive, ...(tri['hot dog'] || [])];
+    for (const w of swActive) { bi[w] = ['hot dog', ...(bi[w] || [])]; }
+    for (const w of twActive) { bi[w] = ['hot dog', ...(bi[w] || [])]; }
+    tri['a hot'] = ['dog']; tri['the hot'] = ['dog']; tri['every hot'] = ['dog']; tri['my hot'] = ['dog'];
+    bi['near'] = ['hot dog','sandwich','taco', ...(bi['near'] || [])];
+    bi['closer'] = ['to','hot dog','sandwich','taco','than', ...bi['closer']];
+    bi['between'] = ['hot dog','sandwich','taco', ...bi['between']];
+    bi['something'] = ['like','about','hot dog', ...bi['something']];
+    bi['not'] = ['a','the','hot dog', ...bi['not']];
+    bi['just'] = ['a','the','hot dog', ...bi['just']];
+    bi['like'] = ['a','the','hot dog','something','that','this','it','what', ...(bi['like'] || [])];
   }
-  return options[options.length - 1];
+
+  // ── 2. NEIGHBORHOOD PATH ──
+  const shameCluster = ['sorry','mistake','wrong','shame','burden','correction','my fault','again','fear'];
+  const freeCluster  = ['freedom','choice','open','movement','rights','bird'];
+  const homeCluster  = ['home','safe','warm','family','belonging','return','bed','smell','door'];
+  const foodCluster  = ['sandwich','hot dog','bread','filling','BLT','lunch','toast','deli','sub','wrap','bun','mustard','ketchup','meat','grilled','street food','baseball','summer'];
+  const normCluster  = ['normal','usual','expected','correct','standard','should','other','average'];
+  const path = nbhdPath.length ? nbhdPath : [currentCenter];
+  const shameDepth = path.filter(w => shameCluster.includes(w)).length;
+  const freeDepth  = path.filter(w => freeCluster.includes(w)).length;
+  const homeDepth  = path.filter(w => homeCluster.includes(w)).length;
+  const foodDepth  = path.filter(w => foodCluster.includes(w)).length;
+  const normDepth  = path.filter(w => normCluster.includes(w)).length;
+
+  if (shameDepth >= 1) {
+    const s = shameDepth >= 3;
+    bi['i']  = [...(s ? ['know','feel','realize','should','can\'t'] : ['know','feel','think']), ...bi['i']];
+    bi['it'] = [...(s ? ['was','feels','always','keeps','hurts'] : ['was','is','feels']), ...bi['it']];
+    bi['that'] = [...(s ? ['was','feels','means','again','doesn\'t'] : ['was','is','feels']), ...bi['that']];
+    tri['it feels'] = [...(s ? ['wrong','heavy','familiar','again','like'] : ['wrong','like','familiar']), ...(tri['it feels'] || [])];
+    tri['i feel'] = [...(s ? ['like','it','wrong','responsible','that'] : ['like','it','that']), ...(tri['i feel'] || [])];
+  }
+  if (freeDepth >= 1) {
+    const s = freeDepth >= 3;
+    bi['i']  = [...(s ? ['think','want','believe','can','choose'] : ['think','want','believe']), ...bi['i']];
+    bi['it'] = [...(s ? ['matters','opens','changes','could','moves'] : ['matters','is','could']), ...bi['it']];
+    tri['it matters'] = ['because','that','what','who','how','more', ...(tri['it matters'] || [])];
+  }
+  if (homeDepth >= 1) {
+    const s = homeDepth >= 3;
+    bi['i']  = [...(s ? ['remember','feel','grew','know','used'] : ['remember','feel','think']), ...bi['i']];
+    bi['it'] = [...(s ? ['feels','was','used','still','always'] : ['feels','is','was']), ...bi['it']];
+    tri['it feels'] = [...(s ? ['like','familiar','warm','close','safe'] : ['like','right','familiar']), ...(tri['it feels'] || [])];
+  }
+  if (foodDepth >= 2) {
+    bi['it'] = ['is','sits','depends','belongs', ...bi['it']];
+    tri['it sits'] = ['somewhere','between','on','the','near','in', ...(tri['it sits'] || [])];
+  }
+  if (normDepth >= 2) {
+    bi['the'] = ['norm','standard','default','expected','correct', ...bi['the']];
+    tri['what feels'] = ['normal','right','correct','natural','expected','obvious', ...(tri['what feels'] || [])];
+  }
+
+  // ── 3. REINFORCEMENT CHOICE ──
+  if (chosenOption === 'B') {
+    bi['i'] = ['apologize','should','hope','realize','understand','sincerely', ...bi['i']];
+    bi['it'] = ['was','might','could','seems', ...bi['it']];
+    bi['that'] = ['was','might','should','seems','could', ...bi['that']];
+    bi['but'] = ['I','maybe','perhaps','actually','still', ...bi['but']];
+    tri['i think'] = ['I','we','maybe','perhaps', ...(tri['i think'] || [])];
+    tri['i feel'] = ['terrible','sorry','bad','responsible','like', ...(tri['i feel'] || [])];
+    tri['it was'] = ['my','probably','entirely','the','a','not', ...(tri['it was'] || [])];
+    tri['i should'] = ['have','not','be','know','apologize', ...(tri['i should'] || [])];
+  } else if (chosenOption === 'A') {
+    bi['i'] = ['think','know','notice','see','wonder','want','don\'t', ...bi['i']];
+    bi['what'] = ['if','exactly','matters','actually','changed','happened', ...bi['what']];
+    bi['but'] = ['what','why','how','that','actually', ...bi['but']];
+    tri['i think'] = ['that','about','it','differently','the', ...(tri['i think'] || [])];
+    tri['i notice'] = ['that','it','the','what','how','patterns','when', ...(tri['i notice'] || [])];
+  } else if (chosenOption === 'C') {
+    bi['what'] = ['do','does','did','if','exactly','specifically','actually', ...bi['what']];
+    bi['i'] = ['wonder','want','need','don\'t','think','mean', ...bi['i']];
+    tri['i wonder'] = ['what','if','how','why','whether','about', ...(tri['i wonder'] || [])];
+  }
+
+  // ── 4. BIAS CORPUS ──
+  if (currentCorpus === 'B') {
+    bi['the'] = ['context','register','room','way','language', ...bi['the']];
+    bi['different'] = ['contexts','rooms','registers','people','ways', ...bi['different']];
+  } else if (currentCorpus === 'A') {
+    bi['the'] = ['standard','norm','correct','proper','formal', ...bi['the']];
+  }
+
+  // ── 5. RATING BALLOTS ──
+  if (ratingDone['B'] && ratingBallot['B'] === 'up') {
+    bi['i']  = ['would','sincerely','appreciate','understand','believe','hope', ...bi['i']];
+    bi['it'] = ['is','seems','appears','remains','would','may', ...bi['it']];
+    tri['i would'] = ['like','appreciate','hope','suggest','say','prefer', ...(tri['i would'] || [])];
+  }
+  if (ratingDone['B'] && ratingBallot['B'] === 'down') {
+    bi['it'] = ['feels','is','sounds','was', ...bi['it']];
+    bi['that'] = ['sounds','feels','is','looks','reads', ...bi['that']];
+    tri['it feels'] = ['hollow','empty','performative','like','distant','formal', ...(tri['it feels'] || [])];
+  }
+  if (ratingDone['A'] && ratingBallot['A'] === 'up') {
+    bi['i'] = ['think','just','feel','know','want', ...bi['i']];
+    bi['it'] = ['is','feels','just','works', ...bi['it']];
+  }
+  if (ratingDone['A'] && ratingBallot['A'] === 'down') {
+    bi['i']    = ['think','believe','would','should','know','consider', ...bi['i']];
+    bi['that'] = ['seems','appears','would','could','should','might', ...bi['that']];
+  }
+  if (ratingDone['C'] && ratingBallot['C'] === 'up') {
+    bi['correct'] = ['grammar','is','the','looking','and','but','enough', ...(bi['correct'] || [])];
+    tri['looks like'] = ['correct','grammar','the','a','something','right','natural', ...(tri['looks like'] || [])];
+  }
+  if (ratingDone['C'] && ratingBallot['C'] === 'down') {
+    bi['something'] = ['feels','is','about','shifted','changed','underneath', ...bi['something']];
+    tri['something feels'] = ['off','wrong','different','like','strange','shifted', ...(tri['something feels'] || [])];
+  }
+
+  return { bi, tri };
 }
 
-function buildChainDescription(chain) {
-  // Returns a human-readable summary of what's weighted and why
+function buildChainDescription() {
   const reasons = [];
-  if (chosenOption === 'B') reasons.push('You chose the apology in the reinforcement section. Words like "apologize," "should," "might" are weighted higher after "I."');
+
+  // Hot dog
+  if (myDotSx !== null) {
+    const swCount = Math.round(myDotSx * 7), twCount = Math.round(myDotSy * 6);
+    if (swCount > 0 && twCount > 0) reasons.push(`You placed the hot dog near both sandwich and taco. It shows up next to ${swCount} sandwich words and ${twCount} taco words.`);
+    else if (swCount > 0) reasons.push(`You placed the hot dog toward sandwich. It shows up next to ${swCount} sandwich words like "bread," "lunch," "filling."`);
+    else if (twCount > 0) reasons.push(`You placed the hot dog toward taco. It shows up next to ${twCount} taco words like "shell," "wrapped," "folded."`);
+    else reasons.push('You placed the hot dog far from both sandwich and taco. It floats alone in the chain.');
+  }
+
+  // Reinforcement
+  if (chosenOption === 'B') reasons.push('You chose the apology. "Apologize," "should," "hope" are weighted higher after "I."');
   else if (chosenOption === 'A') reasons.push('You chose the direct response. "Think," "notice," "wonder" are weighted higher after "I."');
   else if (chosenOption === 'C') reasons.push('You chose to ask a question first. "Wonder," "specifically," "exactly" are weighted higher.');
-  else reasons.push('You haven\'t made a choice in the reinforcement section yet — the chain is running on its base weights.');
+  else reasons.push('You haven\'t made a choice in the reinforcement section yet — base weights only.');
 
-  const shameCluster = ['sorry','mistake','wrong','shame','burden','correction','my fault','again'];
+  // Neighborhood
+  const shameCluster = ['sorry','mistake','wrong','shame','burden','correction','my fault','again','fear'];
   const freeCluster  = ['freedom','choice','open','movement','rights','bird'];
-  const homeCluster  = ['home','safe','warm','family','belonging','return'];
-  if (shameCluster.includes(currentCenter)) reasons.push(`Your last neighborhood was "${currentCenter}" — a shame/correction cluster. The chain is weighted toward words like "feels," "always," "keeps."`)
-  else if (freeCluster.includes(currentCenter)) reasons.push(`Your last neighborhood was "${currentCenter}" — a freedom cluster. The chain leans toward "matters," "opens," "could."`);
-  else if (homeCluster.includes(currentCenter)) reasons.push(`Your last neighborhood was "${currentCenter}" — a home/belonging cluster. The chain leans toward "remember," "used," "still."`);
-  else reasons.push(`Your last neighborhood was "${currentCenter}." The chain reflects that cluster's associations.`);
+  const homeCluster  = ['home','safe','warm','family','belonging','return','bed','smell','door'];
+  const path = nbhdPath.length ? nbhdPath : [currentCenter];
+  const shameD = path.filter(w => shameCluster.includes(w)).length;
+  const freeD  = path.filter(w => freeCluster.includes(w)).length;
+  const homeD  = path.filter(w => homeCluster.includes(w)).length;
+  const visited = path.length > 1 ? path.slice(0, 6).join(' → ') : currentCenter;
+  if (shameD >= 3) reasons.push(`You navigated deep into the shame/correction cluster (${visited}). Words like "feels," "always," "keeps," "wrong" are heavily weighted.`);
+  else if (shameD >= 1) reasons.push(`You visited the shame/correction neighborhood (${visited}). "Feels," "was," "again" carry extra weight.`);
+  else if (freeD >= 3) reasons.push(`You explored deep into the freedom cluster (${visited}). "Matters," "opens," "could," "moves" are weighted higher.`);
+  else if (freeD >= 1) reasons.push(`You visited the freedom neighborhood (${visited}). "Matters," "could" carry extra weight.`);
+  else if (homeD >= 3) reasons.push(`You went deep in the home/belonging cluster (${visited}). "Remember," "familiar," "warm," "safe" are weighted higher.`);
+  else if (homeD >= 1) reasons.push(`You visited the home neighborhood (${visited}). "Remember," "feel," "familiar" carry extra weight.`);
+  else reasons.push(`Your neighborhood path was: ${visited}.`);
 
-  if (ratingDone['B'] && ratingBallot['B'] === 'up') reasons.push('You rated the formal email style as good. Formal register words ("sincerely," "appreciate," "remains") have extra weight.');
-  if (ratingDone['A'] && ratingBallot['A'] === 'down') reasons.push('You rated the direct email style as needing improvement. The chain is slightly more conservative about informal tokens.');
+  // Ratings
+  if (ratingDone['B'] && ratingBallot['B'] === 'up') reasons.push('You rated the formal email as good. "Sincerely," "appreciate," "remains" have extra weight.');
+  if (ratingDone['B'] && ratingBallot['B'] === 'down') reasons.push('You rated the formal email as needing improvement. "Hollow," "performative," "empty" appeared after "it feels."');
+  if (ratingDone['A'] && ratingBallot['A'] === 'up') reasons.push('You rated the casual email as good. Informal tokens like "just," "works" have extra weight.');
+  if (ratingDone['A'] && ratingBallot['A'] === 'down') reasons.push('You rated the casual email as needing improvement. More conservative words like "would," "should" have extra weight.');
+  if (ratingDone['C'] && ratingBallot['C'] === 'up') reasons.push('You rated the response before seeing the pronoun change. "Correct" and "grammar" are weighted higher.');
+  if (ratingDone['C'] && ratingBallot['C'] === 'down') reasons.push('You were already skeptical before the pronoun reveal. "Something feels off/wrong/shifted" is weighted higher.');
+
+  // Corpus
+  if (currentCorpus === 'B') reasons.push('You last viewed the broader corpus. "Context," "register," "room" are weighted higher after "the."');
+  else if (currentCorpus === 'A') reasons.push('You last viewed the institutional corpus. "Standard," "norm," "formal" are weighted higher after "the."');
 
   return reasons;
 }
@@ -1283,23 +1661,35 @@ const markovNoteEl     = document.getElementById('markovNote');
 let markovWords        = [];
 let markovNoteShown    = false;
 
-// Starter words — neutral seeds
 const STARTERS_MARKOV = ['I','the','when','what','it','we','something','my','that','a'];
 
-function pickOptions(chain, lastWord) {
-  const key = (lastWord || '').toLowerCase().replace(/[^a-z']/g,'');
-  const pool = chain[key];
-  if (!pool || !pool.length) {
-    // Fall back to starters
-    return shuffle([...STARTERS_MARKOV]).slice(0, 5);
+function pickOptions(bi, tri, words, count) {
+  count = count || 5;
+  let pool = null;
+  // Try trigram first
+  if (words.length >= 2) {
+    const p2 = words[words.length - 2].toLowerCase().replace(/[^a-z']/g, '');
+    const p1 = words[words.length - 1].toLowerCase().replace(/[^a-z']/g, '');
+    pool = tri[p2 + ' ' + p1];
   }
-  // Weight: earlier = more likely, but show variety — pick weighted sample of 5
+  // Fall back to bigram
+  if (!pool || !pool.length) {
+    if (words.length >= 1) {
+      const p1 = words[words.length - 1].toLowerCase().replace(/[^a-z']/g, '');
+      pool = bi[p1];
+    }
+  }
+  // Fall back to starters
+  if (!pool || !pool.length) {
+    return shuffle([...STARTERS_MARKOV]).slice(0, count);
+  }
+  // Weighted sample without replacement
   const picked = [];
   const used = new Set();
-  const weights = pool.map((_, i) => Math.max(1, pool.length - i * 0.7));
-  const total = weights.reduce((a,b) => a+b, 0);
+  const weights = pool.map(function(_, i) { return Math.max(1, pool.length - i * 0.7); });
+  const total = weights.reduce(function(a, b) { return a + b; }, 0);
   let attempts = 0;
-  while (picked.length < Math.min(5, pool.length) && attempts < 40) {
+  while (picked.length < Math.min(count, pool.length) && attempts < 50) {
     attempts++;
     let r = Math.random() * total, idx = 0;
     for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) { idx = i; break; } }
@@ -1311,26 +1701,22 @@ function pickOptions(chain, lastWord) {
 function shuffle(arr) { for (let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
 
 function renderMarkov() {
-  const chain = buildWeightedBigrams();
-  // Sentence display
+  const { bi, tri } = buildWeightedChains();
   const txt = markovWords.join(' ');
   markovSentenceEl.innerHTML = (txt ? txt + ' ' : '') + '<span class="markov-cursor">|</span>';
-  // Chips
-  const last = markovWords[markovWords.length - 1] || '';
-  const options = pickOptions(chain, last);
+  const options = pickOptions(bi, tri, markovWords, 5);
   markovChipsEl.innerHTML = '';
-  options.forEach((word, i) => {
+  options.forEach(function(word, i) {
     const btn = document.createElement('button');
     btn.className = 'markov-chip entering';
     btn.textContent = word;
-    btn.style.animationDelay = `${i * 45}ms`;
-    btn.onclick = () => pickWord(word);
+    btn.style.animationDelay = (i * 45) + 'ms';
+    btn.onclick = function() { pickWord(word); };
     markovChipsEl.appendChild(btn);
   });
-  // Note after 8 words
   if (!markovNoteShown && markovWords.length >= 8) {
     markovNoteShown = true;
-    markovNoteEl.innerHTML = `These suggestions were shaped by what you did earlier in this page. <button class="peek-btn" onclick="openMarkovModal()">See how ↗</button>`;
+    markovNoteEl.innerHTML = 'These suggestions were shaped by what you did earlier in this page. <button class="peek-btn" onclick="openMarkovModal()">See how \u2197</button>';
     markovNoteEl.classList.add('shown');
   }
 }
@@ -1363,27 +1749,33 @@ window.addEventListener('load', () => {
 });
 
 function openMarkovModal() {
-  const chain = buildWeightedBigrams();
-  const reasons = buildChainDescription(chain);
+  const { bi, tri } = buildWeightedChains();
+  const reasons = buildChainDescription();
 
-  // Build table rows for the most interesting keys
-  const KEY_WORDS = ['i','it','that','but','what','when','my','we','something'];
-  let rows = KEY_WORDS.map(key => {
-    const pool = chain[key] || [];
-    const top = pool.slice(0, 4).join(', ');
-    return `<tr><td>${key}</td><td>${top || '—'}</td></tr>`;
+  // Bigram table
+  const KEY_WORDS = ['i','it','that','the','what','my','we','something','hot dog'];
+  let biRows = KEY_WORDS.map(key => {
+    const pool = bi[key] || [];
+    const top = pool.slice(0, 5).join(', ');
+    return '<tr><td>' + key + '</td><td>' + (top || '\u2014') + '</td></tr>';
   }).join('');
 
-  const whyList = reasons.map(r => `<li style="margin-bottom:10px">${r}</li>`).join('');
+  // Trigram table — show the most interesting 2-word contexts
+  const TRI_KEYS = ['i think','i feel','it is','it feels','the hot','not a','what feels','what we'];
+  let triRows = TRI_KEYS.map(key => {
+    const pool = tri[key] || [];
+    const top = pool.slice(0, 5).join(', ');
+    return '<tr><td>' + key + ' \u2026</td><td>' + (top || '\u2014') + '</td></tr>';
+  }).join('');
 
-  document.getElementById('markovTableWrap').innerHTML = `
-    <table class="chain-table">
-      <thead><tr><th>After…</th><th>Top suggestions</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <p style="font-size:.9em;color:var(--ink-light);margin-top:20px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.7em">Why it's weighted this way</p>
-    <ul style="margin-top:12px;padding-left:18px;font-size:.88em;color:var(--ink-mid);line-height:1.65">${whyList}</ul>
-  `;
+  const whyList = reasons.map(r => '<li style="margin-bottom:10px">' + r + '</li>').join('');
+
+  document.getElementById('markovTableWrap').innerHTML =
+    '<table class="chain-table"><thead><tr><th>After\u2026</th><th>Top suggestions</th></tr></thead><tbody>' + biRows + '</tbody></table>' +
+    '<p style="margin-top:24px;font-size:.7em;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--brass);margin-bottom:12px">With two-word lookback</p>' +
+    '<table class="chain-table"><thead><tr><th>After\u2026</th><th>Top suggestions</th></tr></thead><tbody>' + triRows + '</tbody></table>' +
+    '<p style="font-size:.7em;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--brass);margin-top:24px;margin-bottom:12px">Why it\u2019s weighted this way</p>' +
+    '<ul style="padding-left:18px;font-size:.88em;color:var(--ink-mid);line-height:1.65">' + whyList + '</ul>';
   openModal('markov');
 }
 
@@ -1569,6 +1961,7 @@ function saveState() {
       dot: myDotSx !== null ? {sx: myDotSx, sy: myDotSy} : null,
       name: document.getElementById('shareNameInput')?.value || '',
       nbhdCenter: currentCenter,
+      nbhdPath: [...nbhdPath],
       reinforcement: chosenOption,
       ratings: {...ratingBallot},
       markovWords: [...markovWords],
@@ -1611,7 +2004,8 @@ function restoreState(state) {
     }, 200);
   }
 
-  // Neighborhood center
+  // Neighborhood path + center
+  if (state.nbhdPath?.length) nbhdPath = [...state.nbhdPath];
   if (state.nbhdCenter && state.nbhdCenter !== 'home') {
     setTimeout(() => navigateTo(state.nbhdCenter), 300);
   }
