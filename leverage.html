@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What Are You Measuring?</title>
+<style>
+:root {
+  --cream: #FAF7F2;
+  --paper: #FDFAF6;
+  --ink: #1A1612;
+  --ink-mid: #5C4F43;
+  --ink-light: #9C8E82;
+  --ink-faint: #C4B8AB;
+  --green: #2D7A4F;
+  --green-light: #E8F5EC;
+  --coral: #C94F2A;
+  --coral-light: #FDF0EC;
+  --brass: #A87228;
+  --teal: #1A7060;
+  --grid: #E8E0D4;
+  --shadow: rgba(26, 22, 18, 0.06);
+  --shadow-md: rgba(26, 22, 18, 0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ── Hero ─────────────────────────────────────── */
+.hero {
+  padding: 80px 24px 60px;
+  text-align: center;
+}
+.eyebrow {
+  font-size: .72em; font-weight: 700; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--brass); margin-bottom: 20px;
+}
+.hero h1 {
+  font-size: clamp(2.4em, 7vw, 4.5em);
+  font-weight: 900; line-height: 1.06;
+  letter-spacing: -.025em; margin-bottom: 24px;
+}
+.hero h1 em { font-style: normal; color: var(--green); }
+.hero .subtitle {
+  font-size: 1.1em; color: var(--ink-mid);
+  max-width: 520px; margin: 0 auto; line-height: 1.65;
+}
+
+/* ── Simulation ───────────────────────────────── */
+.sim-section {
+  max-width: 800px; margin: 0 auto; padding: 40px 24px;
+}
+.sim-section h2 {
+  font-size: 1.5em; font-weight: 800; margin-bottom: 8px;
+}
+.sim-intro {
+  font-size: 1em; color: var(--ink-mid); margin-bottom: 24px; max-width: 600px;
+}
+
+.ecosystem {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 2px 4px var(--shadow), 0 8px 24px var(--shadow);
+  position: relative;
+  transition: all 0.8s ease;
+}
+
+/* The frame that will be revealed */
+.ecosystem-frame {
+  position: absolute;
+  inset: -4px;
+  border: 4px solid transparent;
+  border-radius: 20px;
+  transition: border-color 1s ease, box-shadow 1s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+.ecosystem-frame.revealed {
+  border-color: var(--coral);
+  box-shadow: 0 0 0 8px rgba(201, 79, 42, 0.08);
+}
+.ecosystem-frame .frame-label {
+  position: absolute;
+  top: -14px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--coral);
+  color: white;
+  font-size: .72em;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 4px 16px;
+  border-radius: 100px;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  white-space: nowrap;
+}
+.ecosystem-frame.revealed .frame-label { opacity: 1; }
+
+/* Dashboard gauges */
+.gauges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.gauge {
+  text-align: center;
+  padding: 16px 8px;
+  border-radius: 12px;
+  background: var(--cream);
+  transition: all 0.6s ease;
+}
+.gauge-label {
+  font-size: .72em; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-light); margin-bottom: 8px;
+}
+.gauge-bar-wrap {
+  height: 8px;
+  background: var(--grid);
+  border-radius: 100px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.gauge-bar {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 1s cubic-bezier(.4, 0, .2, 1), background-color 0.6s ease;
+}
+.gauge-value {
+  font-size: 1.5em; font-weight: 800;
+  transition: color 0.6s ease;
+}
+
+/* Narrative display */
+.narrative {
+  text-align: center;
+  padding: 20px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+  border: 1.5px dashed var(--grid);
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.6s ease;
+}
+.narrative p {
+  font-size: 1em;
+  color: var(--ink-mid);
+  font-style: italic;
+  line-height: 1.6;
+  max-width: 500px;
+}
+
+/* Event card */
+.event-card {
+  background: var(--coral-light);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  border-left: 4px solid var(--coral);
+}
+.event-card h3 {
+  font-size: .9em; font-weight: 700;
+  color: var(--coral); margin-bottom: 6px;
+}
+.event-card p {
+  font-size: .95em; color: var(--ink-mid); line-height: 1.55;
+}
+
+/* Intervention buttons */
+.interventions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.intervention-btn {
+  text-align: left;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: 1.5px solid var(--grid);
+  background: var(--cream);
+  font-size: .95em;
+  font-family: inherit;
+  color: var(--ink);
+  cursor: pointer;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+}
+.intervention-btn:hover {
+  border-color: var(--ink-mid);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+.intervention-btn .lever-type {
+  font-size: .68em; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-light);
+  display: block; margin-bottom: 2px;
+}
+.intervention-btn.used {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.intervention-btn.deep {
+  border-color: var(--coral);
+  background: var(--coral-light);
+}
+.intervention-btn.deep .lever-type { color: var(--coral); }
+
+/* Phase indicator */
+.phase-indicator {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.phase-dots {
+  display: inline-flex; gap: 8px;
+}
+.phase-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--grid);
+  transition: background 0.4s ease;
+}
+.phase-dot.active { background: var(--green); }
+.phase-dot.current { background: var(--coral); }
+
+/* Result message */
+.result-msg {
+  text-align: center;
+  padding: 16px;
+  border-radius: 10px;
+  margin-top: 16px;
+  font-size: .95em;
+  line-height: 1.6;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.result-msg.shown {
+  opacity: 1;
+  transform: translateY(0);
+}
+.result-msg.partial { background: #FFF8E6; color: var(--brass); }
+.result-msg.healed { background: var(--coral-light); color: var(--coral); }
+.result-msg.shifted { background: var(--green-light); color: var(--green); }
+
+/* ── Pull-back section ────────────────────────── */
+.pullback {
+  max-width: 620px; margin: 0 auto;
+  padding: 60px 24px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1s ease, transform 1s ease;
+  pointer-events: none;
+}
+.pullback.shown {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.pullback h2 {
+  font-size: clamp(1.6em, 4vw, 2.2em);
+  font-weight: 900;
+  letter-spacing: -.02em;
+  margin-bottom: 20px;
+}
+.pullback p {
+  font-size: 1.05em;
+  color: var(--ink-mid);
+  line-height: 1.75;
+  margin-bottom: 16px;
+}
+.pullback .pull-quote {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: var(--teal);
+  line-height: 1.5;
+  border-left: 3px solid var(--teal);
+  padding: 4px 0 4px 22px;
+  margin: 32px 0;
+  text-align: left;
+}
+
+/* ── Remeasure section ────────────────────────── */
+.remeasure {
+  max-width: 800px; margin: 0 auto;
+  padding: 40px 24px 80px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1s ease, transform 1s ease;
+  pointer-events: none;
+}
+.remeasure.shown {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.remeasure h2 {
+  font-size: 1.5em; font-weight: 800;
+  margin-bottom: 8px; text-align: center;
+}
+.remeasure .remeasure-intro {
+  text-align: center;
+  font-size: 1em;
+  color: var(--ink-mid);
+  margin-bottom: 32px;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.metric-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.metric-choice {
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1.5px solid var(--grid);
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+.metric-choice:hover {
+  border-color: var(--green);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+.metric-choice.selected {
+  border-color: var(--green);
+  background: var(--green-light);
+}
+.metric-choice h4 {
+  font-size: .95em; font-weight: 700; margin-bottom: 4px;
+}
+.metric-choice p {
+  font-size: .8em; color: var(--ink-light); line-height: 1.4;
+}
+
+/* ── Closing ──────────────────────────────────── */
+.closing {
+  max-width: 620px; margin: 0 auto;
+  padding: 40px 24px 100px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  pointer-events: none;
+}
+.closing.shown { opacity: 1; pointer-events: auto; }
+.closing p {
+  font-size: 1.1em;
+  color: var(--ink-mid);
+  line-height: 1.75;
+}
+.closing .seed {
+  display: inline-block;
+  font-size: 2em;
+  margin: 24px 0;
+  animation: pulse 3s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+.byline {
+  font-size: .78em;
+  color: var(--ink-faint);
+  letter-spacing: .04em;
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="eyebrow">Systems Literacy</div>
+  <h1>What Are You<br><em>Measuring?</em></h1>
+  <p class="subtitle">You're in charge of a thriving valley. A development proposal arrives. You have tools to respond. But the most powerful lever isn't on your dashboard — yet.</p>
+  <p class="byline" style="margin-top:20px">A design exploration by Anna &amp; Hallie &amp; Claude</p>
+</div>
+
+<div class="sim-section">
+  <div class="phase-indicator">
+    <div class="phase-dots">
+      <div class="phase-dot active current" data-phase="0"></div>
+      <div class="phase-dot" data-phase="1"></div>
+      <div class="phase-dot" data-phase="2"></div>
+      <div class="phase-dot" data-phase="3"></div>
+      <div class="phase-dot" data-phase="4"></div>
+    </div>
+  </div>
+
+  <div class="ecosystem" id="ecosystem">
+    <div class="ecosystem-frame" id="eco-frame">
+      <span class="frame-label">ASSUMPTION: GROWTH = PROGRESS</span>
+    </div>
+
+    <div class="gauges" id="gauges">
+      <div class="gauge">
+        <div class="gauge-label">Biodiversity</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar" id="bar-bio" style="width:92%; background:var(--green)"></div></div>
+        <div class="gauge-value" id="val-bio">92</div>
+      </div>
+      <div class="gauge">
+        <div class="gauge-label">Water Quality</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar" id="bar-water" style="width:88%; background:var(--green)"></div></div>
+        <div class="gauge-value" id="val-water">88</div>
+      </div>
+      <div class="gauge">
+        <div class="gauge-label">Soil Health</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar" id="bar-soil" style="width:85%; background:var(--green)"></div></div>
+        <div class="gauge-value" id="val-soil">85</div>
+      </div>
+      <div class="gauge">
+        <div class="gauge-label">Community Wellbeing</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar" id="bar-well" style="width:78%; background:var(--green)"></div></div>
+        <div class="gauge-value" id="val-well">78</div>
+      </div>
+    </div>
+
+    <div class="narrative" id="narrative">
+      <p>The valley is healthy. Streams run clear, the forest canopy is dense, and the town has what it needs. It's not perfect — but it's alive.</p>
+    </div>
+
+    <div id="event-area"></div>
+    <div id="interventions"></div>
+    <div class="result-msg" id="result-msg"></div>
+  </div>
+</div>
+
+<div class="pullback" id="pullback">
+  <h2>Wait.</h2>
+  <p>You've been trying to protect this valley using the tools on the dashboard. Some worked for a while. None lasted.</p>
+  <p>But look at the dashboard itself. What is it measuring?</p>
+  <p><strong>Numbers going up = good. Numbers going down = bad.</strong></p>
+  <p>That's not neutral. That's a story about what progress looks like. And the development pressure — the thing that keeps coming — is telling the same story.</p>
+  <div class="pull-quote">
+    The deepest place to intervene in a system isn't the rules, the incentives, or the structures. It's the assumptions underneath all of them — the things so obvious nobody thinks to question them.
+  </div>
+  <p>What if you could change what the dashboard measures?</p>
+</div>
+
+<div class="remeasure" id="remeasure">
+  <h2>Remeasure.</h2>
+  <p class="remeasure-intro">Choose what matters. The valley will respond — not to your intervention, but to your attention.</p>
+  <div class="metric-choices" id="metric-choices">
+    <div class="metric-choice" onclick="chooseMetric(this, 'reciprocity')">
+      <h4>Reciprocity</h4>
+      <p>What's given back for what's taken</p>
+    </div>
+    <div class="metric-choice" onclick="chooseMetric(this, 'resilience')">
+      <h4>Resilience</h4>
+      <p>How well the system absorbs shocks</p>
+    </div>
+    <div class="metric-choice" onclick="chooseMetric(this, 'sufficiency')">
+      <h4>Sufficiency</h4>
+      <p>Does everyone have enough — not more</p>
+    </div>
+    <div class="metric-choice" onclick="chooseMetric(this, 'relationship')">
+      <h4>Relationship Density</h4>
+      <p>How connected are the parts to each other</p>
+    </div>
+  </div>
+  <div class="ecosystem" id="ecosystem-2" style="opacity:0; transform:translateY(20px); transition: all 1s ease;">
+    <div class="gauges" id="gauges-2"></div>
+    <div class="narrative" id="narrative-2">
+      <p></p>
+    </div>
+  </div>
+</div>
+
+<div class="closing" id="closing">
+  <div class="seed">🌱</div>
+  <p>You didn't fix the system. You changed what you were looking for. And the system — because it was alive — grew toward what you noticed.</p>
+  <p style="margin-top:16px">That's paradigm-level intervention. Not a bigger lever. A different question.</p>
+  <p style="margin-top:32px; font-size:.9em; color:var(--ink-light)">
+    The framework you just experienced is based on Donella Meadows' "Leverage Points: Places to Intervene in a System" (1999). She put "the power to transcend paradigms" at the very top — not as the hardest lever to pull, but as the place where you realize the levers were part of the story all along.
+  </p>
+</div>
+
+<script>
+const state = {
+  phase: 0,
+  bio: 92, water: 88, soil: 85, well: 78,
+  interventionsUsed: [],
+};
+
+const phases = [
+  // Phase 0: Introduction — healthy valley
+  {
+    event: null,
+    interventions: null,
+    auto: false,
+  },
+  // Phase 1: Development pressure arrives
+  {
+    event: {
+      title: 'Development Proposal',
+      text: 'A mining company wants to open a lithium extraction site in the northern hills. They promise 200 jobs and a boost to the local economy. The county board is excited.',
+    },
+    interventions: [
+      { id: 'regulate', type: 'Parameters', label: 'Require environmental impact assessment and runoff limits', effect: { bio: -8, water: -12, soil: -6, well: +5 }, msg: 'The assessment delays the project six months. New limits reduce the worst runoff. But the mine opens — and the numbers start sliding.', cls: 'partial' },
+      { id: 'zoning', type: 'Rules', label: 'Change zoning laws to protect the watershed', effect: { bio: -3, water: -4, soil: -3, well: -8 }, msg: 'The zoning change blocks this site. The company moves to the next valley. The town loses the promised jobs and residents are angry.', cls: 'partial' },
+      { id: 'fund', type: 'Structure', label: 'Create a community land trust to buy the northern hills', effect: { bio: -2, water: -2, soil: -2, well: +2 }, msg: 'The trust buys the land. It works — for now. But the fund is fragile, and the economic pressure hasn\'t gone anywhere. It\'s waiting.', cls: 'partial' },
+    ],
+  },
+  // Phase 2: System heals around the fix
+  {
+    event: {
+      title: 'Two Years Later',
+      text: 'The pressure is back. A different company, a different resource, the same story. "Growth means jobs means progress." Your earlier fix is straining.',
+    },
+    interventions: [
+      { id: 'lobby', type: 'Rules', label: 'Lobby for state-level extraction moratorium', effect: { bio: -4, water: -6, soil: -5, well: -3 }, msg: 'The moratorium passes but has a sunset clause. Three years. The pressure waits.', cls: 'healed' },
+      { id: 'educate', type: 'Information', label: 'Fund a public awareness campaign about ecosystem services', effect: { bio: -5, water: -5, soil: -4, well: +1 }, msg: 'People learn the facts. Most agree the valley matters. But when the next proposal comes with a jobs number attached, the facts don\'t feel like enough.', cls: 'healed' },
+      { id: 'diversify', type: 'Structure', label: 'Invest in ecotourism and regenerative agriculture as alternative economy', effect: { bio: -1, water: -3, soil: +2, well: +4 }, msg: 'The alternative economy grows, slowly. It helps. But it\'s still competing inside the same story: growth, measured in dollars.', cls: 'healed' },
+    ],
+  },
+  // Phase 3: Reveal — the frame becomes visible
+  {
+    event: {
+      title: 'The Pattern',
+      text: 'Every intervention worked — for a while. Every time, the pressure came back. Not because your fixes were wrong, but because they were all answers to the same question: "How do we keep growing without too much damage?"',
+    },
+    interventions: [
+      { id: 'reveal', type: 'Paradigm', label: '...What if that\'s the wrong question?', effect: { bio: 0, water: 0, soil: 0, well: 0 }, msg: '', cls: 'shifted', deep: true },
+    ],
+  },
+];
+
+function updateGauges() {
+  ['bio', 'water', 'soil', 'well'].forEach(k => {
+    const v = Math.max(0, Math.min(100, state[k]));
+    state[k] = v;
+    const bar = document.getElementById(`bar-${k}`);
+    const val = document.getElementById(`val-${k}`);
+    bar.style.width = v + '%';
+    val.textContent = v;
+    const color = v > 65 ? 'var(--green)' : v > 40 ? 'var(--brass)' : 'var(--coral)';
+    bar.style.background = color;
+    val.style.color = color;
+  });
+}
+
+function updatePhaseDots() {
+  document.querySelectorAll('.phase-dot').forEach((d, i) => {
+    d.classList.toggle('active', i <= state.phase);
+    d.classList.toggle('current', i === state.phase);
+  });
+}
+
+function showEvent(ev) {
+  const area = document.getElementById('event-area');
+  if (!ev) { area.innerHTML = ''; return; }
+  area.innerHTML = `<div class="event-card"><h3>${ev.title}</h3><p>${ev.text}</p></div>`;
+}
+
+function showInterventions(interventions) {
+  const el = document.getElementById('interventions');
+  if (!interventions) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="interventions">' + interventions.map(iv =>
+    `<button class="intervention-btn${iv.deep ? ' deep' : ''}" onclick="intervene('${iv.id}')">
+      <span class="lever-type">${iv.type}</span>
+      ${iv.label}
+    </button>`
+  ).join('') + '</div>';
+}
+
+function showResult(msg, cls) {
+  const el = document.getElementById('result-msg');
+  el.textContent = msg;
+  el.className = 'result-msg ' + cls + ' shown';
+}
+
+function setNarrative(text) {
+  const el = document.getElementById('narrative');
+  el.innerHTML = `<p>${text}</p>`;
+}
+
+function advancePhase() {
+  state.phase++;
+  updatePhaseDots();
+  const phase = phases[state.phase];
+  if (!phase) return;
+
+  document.getElementById('result-msg').className = 'result-msg';
+
+  showEvent(phase.event);
+  showInterventions(phase.interventions);
+}
+
+function intervene(id) {
+  const phase = phases[state.phase];
+  const iv = phase.interventions.find(i => i.id === id);
+  if (!iv) return;
+
+  // Special case: the paradigm reveal
+  if (id === 'reveal') {
+    // Reveal the frame
+    document.getElementById('eco-frame').classList.add('revealed');
+    showInterventions(null);
+    showEvent(null);
+    setNarrative('Look at the frame around this dashboard. It\'s been there the whole time.');
+
+    setTimeout(() => {
+      document.getElementById('pullback').classList.add('shown');
+    }, 2000);
+
+    setTimeout(() => {
+      document.getElementById('remeasure').classList.add('shown');
+      updatePhaseDots();
+    }, 4000);
+
+    state.phase = 4;
+    updatePhaseDots();
+    return;
+  }
+
+  // Apply effects
+  state.bio += iv.effect.bio;
+  state.water += iv.effect.water;
+  state.soil += iv.effect.soil;
+  state.well += iv.effect.well;
+  updateGauges();
+
+  // Mark button as used
+  const btns = document.querySelectorAll('.intervention-btn');
+  btns.forEach(b => b.classList.add('used'));
+
+  showResult(iv.msg, iv.cls);
+  state.interventionsUsed.push(id);
+
+  // Advance after delay
+  setTimeout(() => advancePhase(), 3000);
+}
+
+function chooseMetric(el, metric) {
+  document.querySelectorAll('.metric-choice').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+
+  const eco2 = document.getElementById('ecosystem-2');
+  eco2.style.opacity = '1';
+  eco2.style.transform = 'translateY(0)';
+
+  const narratives = {
+    reciprocity: {
+      gauges: [
+        { label: 'Given Back / Taken', value: 34 },
+        { label: 'Nutrient Return', value: 62 },
+        { label: 'Community Exchange', value: 71 },
+        { label: 'Watershed Balance', value: 48 },
+      ],
+      text: 'Measured by reciprocity, the valley looks different. The extraction wasn\'t just "bad for the environment" — it was a one-way relationship. Taking without returning. The question changes from "how much can we take?" to "what are we giving back?"'
+    },
+    resilience: {
+      gauges: [
+        { label: 'Shock Absorption', value: 45 },
+        { label: 'Species Redundancy', value: 58 },
+        { label: 'Economic Diversity', value: 31 },
+        { label: 'Social Trust', value: 67 },
+      ],
+      text: 'Measured by resilience, you see what\'s fragile. The economy depends on one story. The ecosystem has lost its redundancy. Resilience asks: "if something goes wrong, what catches us?" Right now — not much.'
+    },
+    sufficiency: {
+      gauges: [
+        { label: 'Basic Needs Met', value: 82 },
+        { label: 'Resource Distribution', value: 44 },
+        { label: 'Waste / Excess', value: 68 },
+        { label: 'Enough-ness', value: 55 },
+      ],
+      text: 'Measured by sufficiency, the problem reframes entirely. The valley had enough. The development pressure wasn\'t about need — it was about more. Sufficiency asks: "does everyone have what they need?" not "how much can we produce?"'
+    },
+    relationship: {
+      gauges: [
+        { label: 'Root Networks', value: 73 },
+        { label: 'Pollinator Links', value: 51 },
+        { label: 'Community Ties', value: 65 },
+        { label: 'Water Connections', value: 59 },
+      ],
+      text: 'Measured by relationship density, you see the web. Every extraction severs connections — between species, between soil and water, between people and place. The question becomes: "how connected are we?" not "how productive are we?"'
+    },
+  };
+
+  const data = narratives[metric];
+  const g2 = document.getElementById('gauges-2');
+  g2.innerHTML = data.gauges.map(g => {
+    const color = g.value > 65 ? 'var(--green)' : g.value > 40 ? 'var(--brass)' : 'var(--coral)';
+    return `<div class="gauge">
+      <div class="gauge-label">${g.label}</div>
+      <div class="gauge-bar-wrap"><div class="gauge-bar" style="width:${g.value}%; background:${color}"></div></div>
+      <div class="gauge-value" style="color:${color}">${g.value}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('narrative-2').innerHTML = `<p>${data.text}</p>`;
+
+  setTimeout(() => {
+    document.getElementById('closing').classList.add('shown');
+  }, 1500);
+}
+
+// Boot: show initial state, then after a beat show phase 1
+updateGauges();
+updatePhaseDots();
+setTimeout(() => advancePhase(), 2500);
+
+</script>
+</body>
+</html>
